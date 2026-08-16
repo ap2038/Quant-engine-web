@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quant Engine | Terminal</title>
     
-    <!-- OWASP A02: Strict Content Security Policy (CSP) -->
+    <!-- OWASP A02: Strict Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'none';
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
@@ -22,20 +22,49 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
     
     <script>
-        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { mono: ['JetBrains Mono', 'monospace'] }, colors: { terminal: '#0a0a0a', panel: '#171717', accent: '#3b82f6' } } } }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { terminal: '#0a0a0a', panel: '#171717', accent: '#3b82f6' }
+                }
+            }
+        }
     </script>
+    
+    <!-- Embedded Styles: Eliminates external styles.css loading issues -->
+    <style>
+        body { background-color: #0a0a0a; color: #e5e5e5; font-family: 'JetBrains Mono', monospace; }
+        
+        /* Page switching logic */
+        .page { display: none !important; }
+        .page.active { display: block !important; animation: fadeIn 0.2s ease-in-out; }
+        
+        /* Navigation styling */
+        .nav-item.active { background-color: #262626; border-left: 3px solid #3b82f6; color: #ffffff; }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(4px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
+    </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="w-64 bg-panel border-r border-gray-800 flex flex-col z-10">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-panel border-r border-gray-800 flex flex-col z-10 select-none">
         <div class="p-6 border-b border-gray-800">
             <h1 class="text-xl font-bold tracking-tighter text-white">QUANT<span class="text-accent">ENGINE</span></h1>
             <div class="flex items-center mt-2 space-x-2">
                 <div id="status-indicator" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span id="market-status-text" class="text-xs text-gray-400">Fetching Status...</span>
+                <span id="market-status-text" class="text-xs text-gray-400">Market: Open</span>
             </div>
         </div>
         <nav class="flex-1 py-4">
@@ -44,37 +73,38 @@
             <button onclick="navigate('screener')" id="nav-screener" class="nav-item w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">🎯 Equity Screener</button>
         </nav>
         <div class="p-4 border-t border-gray-800 text-xs text-gray-600">
-            Hosted via GitHub Pages<br>Secured by Strict CSP
+            Zero-Trust Architecture<br>Secured by Strict CSP
         </div>
     </aside>
 
+    <!-- Main Content Viewport -->
     <main class="flex-1 overflow-y-auto p-8 relative">
         
         <!-- PAGE 1: Overview -->
         <div id="page-overview" class="page active">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">System Overview</h2>
+                <h2 class="text-2xl font-bold text-white">Macro Overview</h2>
                 <span class="text-xs text-gray-500">Last Sync: <span id="last-sync">--:--:--</span></span>
             </div>
             
-            <!-- Macro Indicators Grid -->
+            <!-- Indicators Grid -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg">
                     <p class="text-gray-400 text-xs uppercase tracking-wider">India VIX</p>
                     <p class="text-2xl font-bold text-white mt-1" id="ui-vix">--</p>
                 </div>
                 <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg">
-                    <p class="text-gray-400 text-xs uppercase tracking-wider">Overall Sentiment</p>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Sentiment</p>
                     <p class="text-2xl font-bold mt-1" id="ui-sentiment">--</p>
                 </div>
                 <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg col-span-2">
-                    <p class="text-gray-400 text-xs uppercase tracking-wider">Options Data (OI)</p>
-                    <p class="text-lg font-bold text-gray-300 mt-2" id="ui-oi-data">Fetching Open Interest...</p>
+                    <p class="text-gray-400 text-xs uppercase tracking-wider">Options Open Interest (OI)</p>
+                    <p class="text-sm font-semibold text-gray-300 mt-2" id="ui-oi-data">Fetching Open Interest...</p>
                 </div>
             </div>
 
-            <!-- Top 5 Volume Stocks Table -->
-            <h3 class="text-lg font-bold text-white mb-4 mt-8">🔥 Top 5 Volume Surges</h3>
+            <!-- Top 5 Volume Surges -->
+            <h3 class="text-lg font-bold text-white mb-4">🔥 Top 5 Volume Surges</h3>
             <div class="bg-panel rounded border border-gray-800 shadow-lg overflow-hidden">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-gray-900 text-gray-400 border-b border-gray-800">
@@ -85,7 +115,7 @@
                         </tr>
                     </thead>
                     <tbody id="top-stocks-table" class="divide-y divide-gray-800">
-                        <!-- JS Injects Rows Here Safely -->
+                        <tr><td colspan="3" class="px-6 py-6 text-center text-gray-500">Loading stock matrix...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -95,7 +125,7 @@
         <div id="page-positions" class="page">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-white">Algorithm Options Trades</h2>
-                <button onclick="fetchData()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition text-white border border-gray-700 hover:border-blue-500">Force Refresh</button>
+                <button onclick="fetchData()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition text-white border border-gray-700">Force Refresh</button>
             </div>
             <div class="bg-panel rounded border border-gray-800 shadow-lg overflow-hidden">
                 <table class="w-full text-left text-sm">
@@ -109,7 +139,7 @@
                         </tr>
                     </thead>
                     <tbody id="positions-table" class="divide-y divide-gray-800">
-                        <!-- JS injects rows securely here -->
+                        <tr><td colspan="5" class="px-6 py-6 text-center text-gray-500">No active positions.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -118,12 +148,13 @@
         <!-- PAGE 3: Screener -->
         <div id="page-screener" class="page">
             <h2 class="text-2xl font-bold text-white mb-6">Equity Volume Scans</h2>
-            <div class="bg-panel p-6 rounded border border-gray-800 shadow-lg text-gray-400 text-center py-12">
-                Configure your Python scanner to push its volume alerts here.
+            <div class="bg-panel p-8 rounded border border-gray-800 text-center text-gray-500">
+                F&O 108 Stock Scanner module is running. Surges will appear here.
             </div>
         </div>
 
     </main>
+
     <script src="app.js"></script>
 </body>
 </html>
