@@ -1,0 +1,20 @@
+body { background-color: #0a0a0a; color: #e5e5e5; font-family: 'JetBrains Mono', monospace; }
+
+/* SPA Routing Display Logic */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+/* Active Tab Styles */
+.nav-item.active { background-color: #262626; border-left: 3px solid #3b82f6; color: white; }
+
+/* Smooth animations */
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(5px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+/* Custom Scrollbar for terminal feel */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
