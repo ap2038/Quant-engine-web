@@ -10,6 +10,7 @@ function navigate(pageId) {
         targetPage.classList.add('active');
         targetNav.classList.add('active');
     }
+    
     if(pageId === 'overview' || pageId === 'positions') fetchData();
 }
 
@@ -39,31 +40,45 @@ function safeSetText(id, text, colorClass = null) {
     }
 }
 
+// CWE-20: Updated Strict Schema Validation
+function validateTradeData(data) {
+    if (typeof data !== 'object' || data === null) return false;
+    
+    // Only validate the 'trades' object if it exists
+    if (data.trades) {
+        for (const [symbol, details] of Object.entries(data.trades)) {
+            if (typeof symbol !== 'string' || symbol.length > 20) return false;
+            if (!['OPEN', 'CLOSED'].includes(details.status)) return false;
+        }
+    }
+    return true;
+}
+
 async function fetchData() {
     const tableBody = document.getElementById('positions-table');
     const topStocksBody = document.getElementById('top-stocks-table');
     
     try {
+        // Cache-buster
         const response = await fetch(`${GIST_URL}?t=${new Date().getTime()}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         
+        // Security Gate
+        if (!validateTradeData(data)) throw new Error('Payload validation failed.');
+
         // --- 1. PARSE MARKET CONTEXT ---
         if (data.market_context) {
             const ctx = data.market_context;
-            
-            // Sidebar Status
             const isClosed = ctx.status.toUpperCase() === 'CLOSED';
+            
             safeSetText('market-status-text', `Market: ${ctx.status}`);
-            document.getElementById('status-indicator').className = isClosed 
-                ? 'w-2 h-2 bg-gray-500 rounded-full' 
-                : 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+            const statusInd = document.getElementById('status-indicator');
+            if(statusInd) statusInd.className = isClosed ? 'w-2 h-2 bg-gray-500 rounded-full' : 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
 
-            // Top Widgets
             safeSetText('ui-vix', ctx.vix ? ctx.vix.toFixed(2) : '--');
             safeSetText('ui-oi-data', ctx.oi_summary || 'No OI data available.');
             
-            // Sentiment Coloring
             let sentColor = 'text-2xl font-bold mt-1 text-gray-400';
             if (ctx.sentiment === 'BULLISH') sentColor = 'text-2xl font-bold mt-1 text-green-500';
             if (ctx.sentiment === 'BEARISH') sentColor = 'text-2xl font-bold mt-1 text-red-500';
@@ -82,8 +97,7 @@ async function fetchData() {
                 
                 const typeTd = document.createElement('td');
                 typeTd.className = 'px-6 py-3 text-right font-bold';
-                const isBuy = stock.type === 'BUYING';
-                typeTd.className += isBuy ? ' text-green-500' : ' text-red-500';
+                typeTd.className += (stock.type === 'BUYING') ? ' text-green-500' : ' text-red-500';
                 typeTd.textContent = stock.type || 'N/A';
                 tr.appendChild(typeTd);
                 
@@ -92,9 +106,7 @@ async function fetchData() {
         }
 
         // --- 3. PARSE OPTIONS TRADES ---
-        // Backward compatibility: If nested 'trades' doesn't exist, assume root is trades
-        const tradesData = data.trades ? data.trades : (data.market_context ? {} : data);
-
+        const tradesData = data.trades || {};
         if (tableBody) {
             tableBody.innerHTML = ''; 
             for (const [symbol, details] of Object.entries(tradesData)) {
@@ -124,9 +136,10 @@ async function fetchData() {
 
     } catch (error) {
         console.error("Fetch failed", error);
-        safeSetText('market-status-text', 'Connection Lost', 'text-xs text-red-500');
+        if(tableBody) tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-red-500">System Error: ${error.message}</td></tr>`;
     }
 }
 
+// Initialize and poll
 fetchData();
 setInterval(fetchData, 60000);
