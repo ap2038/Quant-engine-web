@@ -17,7 +17,7 @@ function navigate(pageId) {
 // ==========================================
 // PASTE YOUR PUBLIC GIST "RAW" URL BELOW
 // ==========================================
-const GIST_URL = 'YOUR_RAW_GIST_URL_HERE';
+const GIST_URL = 'https://gist.githubusercontent.com/ap2038/941e59e4a43b6cbc639dd716757bfc57/raw/d43d53f3856551865e6dc65231012262a3bad01e/dashboard_data.json';
 
 // CWE-79: Safe DOM Element Creator (XSS Mitigation)
 function createSafeCell(content, className, isHTML = false) {
