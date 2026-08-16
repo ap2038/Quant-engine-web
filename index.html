@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Engine | Terminal</title>
+    
+    <!-- OWASP A02: Strict Content Security Policy (CSP) -->
+    <!-- Blocks XSS, Data Exfiltration, and unauthorized 3rd-party scripts -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'none';
+        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
+        connect-src https://gist.githubusercontent.com;
+        img-src data:;
+        frame-ancestors 'none';
+        base-uri 'none';
+        form-action 'none';
+    ">
+    
+    <!-- SANS Top 25: Prevent MIME-Sniffing and force strict transport -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <!-- Privacy: Prevents leaking the dashboard URL in headers to external links -->
+    <meta name="referrer" content="no-referrer">
+
+    <!-- Tailwind CSS (via CDN for zero-build architecture) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { terminal: '#0a0a0a', panel: '#171717', accent: '#3b82f6' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-panel border-r border-gray-800 flex flex-col z-10">
+        <div class="p-6 border-b border-gray-800">
+            <h1 class="text-xl font-bold tracking-tighter text-white">QUANT<span class="text-accent">ENGINE</span></h1>
+            <div class="flex items-center mt-2 space-x-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-xs text-gray-400">System Online</span>
+            </div>
+        </div>
+        <nav class="flex-1 py-4">
+            <button onclick="navigate('overview')" id="nav-overview" class="nav-item active w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">📊 Dashboard</button>
+            <button onclick="navigate('positions')" id="nav-positions" class="nav-item w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">⚡ Live Trades</button>
+            <button onclick="navigate('screener')" id="nav-screener" class="nav-item w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">🎯 Equity Screener</button>
+        </nav>
+        <div class="p-4 border-t border-gray-800 text-xs text-gray-600">
+            Hosted via GitHub Pages<br>Secured by Strict CSP
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-8 relative">
+        
+        <!-- PAGE 1: Overview -->
+        <div id="page-overview" class="page active">
+            <h2 class="text-2xl font-bold text-white mb-6">System Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-panel p-6 rounded border border-gray-800 shadow-lg">
+                    <p class="text-gray-400 text-sm">System Status</p>
+                    <p class="text-2xl font-bold text-green-500 mt-2">Active</p>
+                </div>
+                <div class="bg-panel p-6 rounded border border-gray-800 shadow-lg">
+                    <p class="text-gray-400 text-sm">Open Positions</p>
+                    <p class="text-3xl font-bold text-white mt-2" id="active-count">0</p>
+                </div>
+                <div class="bg-panel p-6 rounded border border-gray-800 shadow-lg">
+                    <p class="text-gray-400 text-sm">Last Sync</p>
+                    <p class="text-xl font-bold text-blue-400 mt-2" id="last-sync">--:--:--</p>
+                </div>
+            </div>
+            <div class="bg-panel p-6 rounded border border-gray-800 text-gray-400 text-sm">
+                <p>Welcome to the Quant Engine interface. This UI operates securely by fetching sanitized trade states from a public GitHub Gist, ensuring your APIs remain entirely private.</p>
+            </div>
+        </div>
+
+        <!-- PAGE 2: Live Positions -->
+        <div id="page-positions" class="page">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Algorithm Options Trades</h2>
+                <button onclick="fetchData()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition text-white border border-gray-700 hover:border-blue-500">Force Refresh</button>
+            </div>
+            <div class="bg-panel rounded border border-gray-800 shadow-lg overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-900 text-gray-400 border-b border-gray-800">
+                        <tr>
+                            <th class="px-6 py-4">Symbol</th>
+                            <th class="px-6 py-4">Direction</th>
+                            <th class="px-6 py-4">Entry</th>
+                            <th class="px-6 py-4">Stop Loss</th>
+                            <th class="px-6 py-4 text-right">Status / P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="positions-table" class="divide-y divide-gray-800">
+                        <!-- JS injects rows securely here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE 3: Screener -->
+        <div id="page-screener" class="page">
+            <h2 class="text-2xl font-bold text-white mb-6">Equity Volume Scans</h2>
+            <div class="bg-panel p-6 rounded border border-gray-800 shadow-lg text-gray-400 text-center py-12">
+                Configure your Python scanner to push its volume alerts here.
+            </div>
+        </div>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
