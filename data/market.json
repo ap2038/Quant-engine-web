@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-08-20T01:27:10.283045+05:30",
+  "updated_at": "2026-08-20T02:28:59.448323+05:30",
   "source": "GitHub Actions / Yahoo Finance server-side snapshot",
   "market_status": {
     "india": "CLOSED",
-    "us": "OPEN"
+    "us": "AFTER-HOURS"
   },
   "india": {
     "nifty": {
@@ -21,21 +21,21 @@
   },
   "us_markets": {
     "dow": {
-      "value": 53434.23828125,
-      "change": -16.3203125,
-      "change_pct": -0.030533474166360985,
+      "value": 53467.33984375,
+      "change": 16.78125,
+      "change_pct": 0.03139583652913558,
       "timestamp": "2026-08-19T15:55:00-04:00"
     },
     "sp500": {
-      "value": 7704.56005859375,
-      "change": -2.06982421875,
-      "change_pct": -0.02685770888474215,
+      "value": 7708.02978515625,
+      "change": 1.39990234375,
+      "change_pct": 0.018164909500484328,
       "timestamp": "2026-08-19T15:55:00-04:00"
     },
     "nasdaq": {
-      "value": 26316.462890625,
-      "change": -7.701171875,
-      "change_pct": -0.029255143132811412,
+      "value": 26333.328125,
+      "change": 9.1640625,
+      "change_pct": 0.034812359010683025,
       "timestamp": "2026-08-19T15:55:00-04:00"
     }
   },
