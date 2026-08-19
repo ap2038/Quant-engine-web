@@ -1,160 +1,147 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quant Engine | Terminal</title>
-    
-    <!-- OWASP A02: Strict Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'none';
-        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        font-src https://fonts.gstatic.com;
-        connect-src https://gist.githubusercontent.com;
-        img-src data:;
-        frame-ancestors 'none';
-        base-uri 'none';
-        form-action 'none';
-    ">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta name="referrer" content="no-referrer">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { mono: ['JetBrains Mono', 'monospace'] },
-                    colors: { terminal: '#0a0a0a', panel: '#171717', accent: '#3b82f6' }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Embedded Styles: Eliminates external styles.css loading issues -->
-    <style>
-        body { background-color: #0a0a0a; color: #e5e5e5; font-family: 'JetBrains Mono', monospace; }
-        
-        /* Page switching logic */
-        .page { display: none !important; }
-        .page.active { display: block !important; animation: fadeIn 0.2s ease-in-out; }
-        
-        /* Navigation styling */
-        .nav-item.active { background-color: #262626; border-left: 3px solid #3b82f6; color: #ffffff; }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(4px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Quant Engine | Market Command Center</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;img-src data:;font-src https://fonts.gstatic.com;connect-src https://gist.githubusercontent.com;frame-ancestors 'none';base-uri 'none';form-action 'none';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="no-referrer">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{ink:'#07090d',panel:'#0e1218',line:'#1d2530',accent:'#38bdf8'}}}};
+  </script>
+  <style>
+    :root{color-scheme:dark}
+    html,body{background:#07090d;color:#e6edf6;font-family:Inter,sans-serif}
+    body{background-image:radial-gradient(circle at 10% 0%,rgba(56,189,248,.08),transparent 28%),radial-gradient(circle at 85% 10%,rgba(168,85,247,.08),transparent 24%)}
+    .glass{background:linear-gradient(180deg,rgba(17,24,33,.93),rgba(11,15,21,.93));backdrop-filter:blur(16px);border:1px solid rgba(148,163,184,.12);box-shadow:0 18px 50px rgba(0,0,0,.22)}
+    .glow{box-shadow:0 0 0 1px rgba(56,189,248,.15),0 0 36px rgba(56,189,248,.08)}
+    .page{display:none!important}.page.active{display:block!important;animation:fade .18s ease-out}
+    @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+    .nav-item.active{background:linear-gradient(90deg,rgba(56,189,248,.10),rgba(56,189,248,.03));border-left:3px solid #38bdf8;color:#fff}
+    .scan-dot{box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulse 1.9s infinite}
+    @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+    .metric-num{font-family:'JetBrains Mono',monospace;letter-spacing:-.04em}
+    .tiny{font-size:.68rem;letter-spacing:.11em;text-transform:uppercase}
+    .scrollbar::-webkit-scrollbar{width:6px}.scrollbar::-webkit-scrollbar-thumb{background:#273244;border-radius:99px}
+    .btn{transition:all .15s ease}.btn:hover{transform:translateY(-1px)}
+    .call-glow{box-shadow:0 0 0 1px rgba(250,204,21,.16),0 0 32px rgba(250,204,21,.08)}
+    .call-live{box-shadow:0 0 0 1px rgba(34,197,94,.18),0 0 36px rgba(34,197,94,.10)}
+  </style>
 </head>
-<body class="flex h-screen overflow-hidden">
-
-    <!-- Sidebar Navigation -->
-    <aside class="w-64 bg-panel border-r border-gray-800 flex flex-col z-10 select-none">
-        <div class="p-6 border-b border-gray-800">
-            <h1 class="text-xl font-bold tracking-tighter text-white">QUANT<span class="text-accent">ENGINE</span></h1>
-            <div class="flex items-center mt-2 space-x-2">
-                <div id="status-indicator" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span id="market-status-text" class="text-xs text-gray-400">Market: Open</span>
-            </div>
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+  <aside class="w-72 shrink-0 border-r border-slate-800/70 bg-[#090c11]/95 flex flex-col sticky top-0 h-screen">
+    <div class="px-6 pt-6 pb-5 border-b border-slate-800/70">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-[11px] font-mono tracking-[.24em] text-sky-400">MARKET COMMAND</div>
+          <div class="text-2xl font-extrabold tracking-tight mt-1">QUANT<span class="text-sky-400">ENGINE</span></div>
         </div>
-        <nav class="flex-1 py-4">
-            <button onclick="navigate('overview')" id="nav-overview" class="nav-item active w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">📊 Dashboard</button>
-            <button onclick="navigate('positions')" id="nav-positions" class="nav-item w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">⚡ Live Trades</button>
-            <button onclick="navigate('screener')" id="nav-screener" class="nav-item w-full text-left px-6 py-3 text-sm text-gray-300 hover:bg-gray-800 transition">🎯 Equity Screener</button>
-        </nav>
-        <div class="p-4 border-t border-gray-800 text-xs text-gray-600">
-            Zero-Trust Architecture<br>Secured by Strict CSP
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/10">
+          <span id="status-indicator" class="w-2 h-2 rounded-full bg-emerald-400 scan-dot"></span>
+          <span id="market-status-text" class="text-[11px] font-semibold text-emerald-300">OPEN</span>
         </div>
-    </aside>
+      </div>
+      <div class="text-xs text-slate-500 mt-3">Decision dashboard for intraday execution</div>
+    </div>
+    <nav class="p-3 space-y-1 flex-1">
+      <button onclick="navigate('overview')" id="nav-overview" class="nav-item active w-full text-left rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 btn">◉ Dashboard</button>
+      <button onclick="navigate('positions')" id="nav-positions" class="nav-item w-full text-left rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 btn">⚡ Calls & Trades</button>
+      <button onclick="navigate('screener')" id="nav-screener" class="nav-item w-full text-left rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 btn">◌ Breakout Radar</button>
+    </nav>
+    <div class="px-5 py-5 border-t border-slate-800/70 text-[11px] leading-5 text-slate-600 font-mono">LIVE FEED<br>30s REPORT REFRESH<br>NO ORDER EXECUTION</div>
+  </aside>
 
-    <!-- Main Content Viewport -->
-    <main class="flex-1 overflow-y-auto p-8 relative">
-        
-        <!-- PAGE 1: Overview -->
-        <div id="page-overview" class="page active">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Macro Overview</h2>
-                <span class="text-xs text-gray-500">Last Sync: <span id="last-sync">--:--:--</span></span>
-            </div>
-            
-            <!-- Indicators Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg">
-                    <p class="text-gray-400 text-xs uppercase tracking-wider">India VIX</p>
-                    <p class="text-2xl font-bold text-white mt-1" id="ui-vix">--</p>
-                </div>
-                <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg">
-                    <p class="text-gray-400 text-xs uppercase tracking-wider">Sentiment</p>
-                    <p class="text-2xl font-bold mt-1" id="ui-sentiment">--</p>
-                </div>
-                <div class="bg-panel p-5 rounded border border-gray-800 shadow-lg col-span-2">
-                    <p class="text-gray-400 text-xs uppercase tracking-wider">Options Open Interest (OI)</p>
-                    <p class="text-sm font-semibold text-gray-300 mt-2" id="ui-oi-data">Fetching Open Interest...</p>
-                </div>
-            </div>
-
-            <!-- Top 5 Volume Surges -->
-            <h3 class="text-lg font-bold text-white mb-4">🔥 Top 5 Volume Surges</h3>
-            <div class="bg-panel rounded border border-gray-800 shadow-lg overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-900 text-gray-400 border-b border-gray-800">
-                        <tr>
-                            <th class="px-6 py-3">Symbol</th>
-                            <th class="px-6 py-3">Volume</th>
-                            <th class="px-6 py-3 text-right">Pressure</th>
-                        </tr>
-                    </thead>
-                    <tbody id="top-stocks-table" class="divide-y divide-gray-800">
-                        <tr><td colspan="3" class="px-6 py-6 text-center text-gray-500">Loading stock matrix...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+  <main class="flex-1 overflow-y-auto scrollbar">
+    <div class="max-w-[1700px] mx-auto px-5 md:px-8 py-6">
+      <div id="page-overview" class="page active">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+          <div>
+            <div class="tiny text-slate-500">Trader cockpit</div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">Market Command Center</h1>
+            <p class="text-slate-400 mt-2">See the regime, levels, global cues and the current trade posture at a glance.</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <div class="px-3 py-2 rounded-xl glass"><span class="text-slate-500">Last sync</span> <span id="last-sync" class="font-mono text-slate-200 ml-2">--:--:--</span></div>
+            <button onclick="fetchData()" class="btn px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200">↻ Refresh</button>
+          </div>
         </div>
 
-        <!-- PAGE 2: Live Positions -->
-        <div id="page-positions" class="page">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Algorithm Options Trades</h2>
-                <button onclick="fetchData()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition text-white border border-gray-700">Force Refresh</button>
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-5">
+          <div id="call-card" class="xl:col-span-5 glass call-glow rounded-2xl p-6 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/[.05] to-transparent pointer-events-none"></div>
+            <div class="flex items-center justify-between relative">
+              <div class="tiny text-slate-500">Current trading posture</div>
+              <span id="call-badge" class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-yellow-400/10 text-yellow-300 border border-yellow-300/10">WAIT</span>
             </div>
-            <div class="bg-panel rounded border border-gray-800 shadow-lg overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-900 text-gray-400 border-b border-gray-800">
-                        <tr>
-                            <th class="px-6 py-4">Symbol</th>
-                            <th class="px-6 py-4">Direction</th>
-                            <th class="px-6 py-4">Entry</th>
-                            <th class="px-6 py-4">Stop Loss</th>
-                            <th class="px-6 py-4 text-right">Status / P&L</th>
-                        </tr>
-                    </thead>
-                    <tbody id="positions-table" class="divide-y divide-gray-800">
-                        <tr><td colspan="5" class="px-6 py-6 text-center text-gray-500">No active positions.</td></tr>
-                    </tbody>
-                </table>
+            <div id="call-status" class="text-4xl md:text-5xl font-extrabold mt-4 relative">WAIT</div>
+            <div id="call-detail" class="text-slate-400 mt-2 relative">Wait for the right movement to enter.</div>
+            <div class="grid grid-cols-3 gap-3 mt-6 relative">
+              <div><div class="tiny text-slate-600">Confidence</div><div id="call-confidence" class="metric-num text-lg font-bold mt-1">--</div></div>
+              <div><div class="tiny text-slate-600">Signal count</div><div id="call-count" class="metric-num text-lg font-bold mt-1">0</div></div>
+              <div><div class="tiny text-slate-600">Bias</div><div id="call-bias" class="metric-num text-lg font-bold mt-1">NEUTRAL</div></div>
             </div>
-        </div>
+          </div>
 
-        <!-- PAGE 3: Screener -->
-        <div id="page-screener" class="page">
-            <h2 class="text-2xl font-bold text-white mb-6">Equity Volume Scans</h2>
-            <div class="bg-panel p-8 rounded border border-gray-800 text-center text-gray-500">
-                F&O 108 Stock Scanner module is running. Surges will appear here.
-            </div>
-        </div>
+          <div class="xl:col-span-7 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">India VIX</div><div id="ui-vix" class="metric-num text-2xl font-bold mt-2">--</div><div id="vix-regime" class="text-xs text-slate-500 mt-2">Volatility regime</div></div>
+            <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Market breadth</div><div id="breadth-main" class="metric-num text-2xl font-bold mt-2">--</div><div id="breadth-detail" class="text-xs text-slate-500 mt-2">Adv / Dec</div></div>
+            <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Sentiment</div><div id="ui-sentiment" class="metric-num text-2xl font-bold mt-2">NEUTRAL</div><div id="sentiment-detail" class="text-xs text-slate-500 mt-2">Composite regime</div></div>
+            <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">OI posture</div><div id="ui-oi-data" class="text-sm font-semibold text-slate-200 mt-2">No OI data</div><div class="text-xs text-slate-500 mt-2">Options positioning</div></div>
+          </div>
+        </section>
 
-    </main>
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+          <div class="glass rounded-2xl p-5"><div class="flex justify-between items-center mb-4"><div><div class="tiny text-slate-500">India market</div><div id="india-market-label" class="font-semibold mt-1">--</div></div><span id="india-market-status">--</span></div><div id="india-market-meta" class="text-xs text-slate-500">09:15–15:30 IST session</div></div>
+          <div class="glass rounded-2xl p-5"><div class="flex justify-between items-center mb-4"><div><div class="tiny text-slate-500">US market</div><div id="us-market-label" class="font-semibold mt-1">--</div></div><span id="us-market-status">--</span></div><div id="us-market-meta" class="text-xs text-slate-500">ET session status</div></div>
+          <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Global cue</div><div id="global-cue" class="text-lg font-bold mt-2">WAITING</div><div id="global-cue-detail" class="text-xs text-slate-500 mt-1">GIFT Nifty + US market context</div></div>
+        </section>
 
-    <script src="app.js"></script>
+        <section class="mb-5">
+          <div class="flex items-center justify-between mb-3"><div><div class="tiny text-slate-500">Index map</div><h2 class="text-lg font-bold">Key Levels</h2></div><div class="text-xs text-slate-500">Close / change / range</div></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="glass rounded-2xl p-5 glow"><div class="flex justify-between"><div class="tiny text-slate-500">NIFTY 50</div><div id="nifty-state" class="text-xs font-semibold text-slate-400">--</div></div><div id="level-nifty" class="metric-num text-3xl font-extrabold mt-3">--</div><div id="level-nifty-change" class="text-sm mt-1">--</div><div class="grid grid-cols-3 gap-2 mt-5 text-xs"><div><div class="text-slate-600">High</div><div id="nifty-high" class="font-mono mt-1">--</div></div><div><div class="text-slate-600">Low</div><div id="nifty-low" class="font-mono mt-1">--</div></div><div><div class="text-slate-600">Range</div><div id="nifty-range" class="font-mono mt-1">--</div></div></div></div>
+            <div class="glass rounded-2xl p-5"><div class="flex justify-between"><div class="tiny text-slate-500">SENSEX</div><div id="sensex-state" class="text-xs font-semibold text-slate-400">--</div></div><div id="level-sensex" class="metric-num text-3xl font-extrabold mt-3">--</div><div id="level-sensex-change" class="text-sm mt-1">--</div><div class="grid grid-cols-3 gap-2 mt-5 text-xs"><div><div class="text-slate-600">High</div><div id="sensex-high" class="font-mono mt-1">--</div></div><div><div class="text-slate-600">Low</div><div id="sensex-low" class="font-mono mt-1">--</div></div><div><div class="text-slate-600">Range</div><div id="sensex-range" class="font-mono mt-1">--</div></div></div></div>
+            <div class="glass rounded-2xl p-5"><div class="flex justify-between"><div class="tiny text-slate-500">GIFT NIFTY</div><div id="gift-state" class="text-xs font-semibold text-slate-400">--</div></div><div id="level-gift" class="metric-num text-3xl font-extrabold mt-3">--</div><div id="level-gift-change" class="text-sm mt-1">--</div><div class="grid grid-cols-2 gap-2 mt-5 text-xs"><div><div class="text-slate-600">Signal</div><div id="gift-signal" class="font-semibold mt-1">--</div></div><div><div class="text-slate-600">Updated</div><div id="gift-time" class="font-mono mt-1">--</div></div></div></div>
+          </div>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+          <div class="glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4"><div><div class="tiny text-slate-500">US market update</div><h2 class="text-lg font-bold">Wall Street</h2></div><div id="us-data-time" class="text-xs text-slate-600">--</div></div>
+            <div class="grid grid-cols-3 gap-3"><div class="rounded-xl bg-slate-950/60 border border-slate-800 p-4"><div class="tiny text-slate-600">Dow</div><div id="us-dow" class="metric-num text-lg font-bold mt-2">--</div></div><div class="rounded-xl bg-slate-950/60 border border-slate-800 p-4"><div class="tiny text-slate-600">S&amp;P 500</div><div id="us-sp" class="metric-num text-lg font-bold mt-2">--</div></div><div class="rounded-xl bg-slate-950/60 border border-slate-800 p-4"><div class="tiny text-slate-600">Nasdaq</div><div id="us-nasdaq" class="metric-num text-lg font-bold mt-2">--</div></div></div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4"><div><div class="tiny text-slate-500">Market structure</div><h2 class="text-lg font-bold">Breadth & Rotation</h2></div><div id="rotation-label" class="text-xs text-slate-500">--</div></div>
+            <div class="grid grid-cols-2 gap-3"><div class="rounded-xl bg-emerald-500/5 border border-emerald-500/10 p-4"><div class="tiny text-emerald-400/70">Advancers</div><div id="breadth-adv" class="metric-num text-xl font-bold text-emerald-300 mt-2">--</div></div><div class="rounded-xl bg-rose-500/5 border border-rose-500/10 p-4"><div class="tiny text-rose-400/70">Decliners</div><div id="breadth-dec" class="metric-num text-xl font-bold text-rose-300 mt-2">--</div></div></div>
+            <div class="mt-4"><div class="flex justify-between text-xs text-slate-500 mb-1"><span>Advance</span><span>Decline</span></div><div class="h-2 rounded-full bg-slate-900 overflow-hidden flex"><div id="breadth-bar-adv" class="bg-emerald-400 h-full" style="width:50%"></div><div id="breadth-bar-dec" class="bg-rose-400 h-full" style="width:50%"></div></div></div>
+          </div>
+        </section>
+
+        <section class="mb-8">
+          <div class="flex items-center justify-between mb-3"><div><div class="tiny text-slate-500">Opportunity radar</div><h2 class="text-lg font-bold">Top Volume / Breakout Watch</h2></div><div class="text-xs text-slate-500">Sorted by upstream score</div></div>
+          <div class="glass rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-950/60 text-slate-500"><tr><th class="px-5 py-3 text-left">Rank</th><th class="px-5 py-3 text-left">Symbol</th><th class="px-5 py-3 text-right">Price</th><th class="px-5 py-3 text-right">Volume</th><th class="px-5 py-3 text-right">Score</th><th class="px-5 py-3 text-right">Pressure</th><th class="px-5 py-3 text-right">Setup</th></tr></thead><tbody id="top-stocks-table" class="divide-y divide-slate-800/60"><tr><td colspan="7" class="px-5 py-8 text-center text-slate-600">Loading market matrix…</td></tr></tbody></table></div>
+          </div>
+        </section>
+      </div>
+
+      <div id="page-positions" class="page">
+        <div class="flex items-end justify-between mb-6"><div><div class="tiny text-slate-500">Execution view</div><h1 class="text-3xl font-extrabold">Calls &amp; Trades</h1><p class="text-slate-400 mt-1">Only qualified setups should appear here.</p></div><button onclick="fetchData()" class="btn px-4 py-2 rounded-xl border border-slate-700 bg-slate-900 text-sm">↻ Refresh</button></div>
+        <div class="glass rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-950/60 text-slate-500"><tr><th class="px-5 py-4 text-left">Symbol</th><th class="px-5 py-4 text-left">Direction</th><th class="px-5 py-4 text-right">Entry</th><th class="px-5 py-4 text-right">SL</th><th class="px-5 py-4 text-right">Target</th><th class="px-5 py-4 text-right">Status / P&amp;L</th></tr></thead><tbody id="positions-table" class="divide-y divide-slate-800/60"><tr><td colspan="6" class="px-5 py-10 text-center text-slate-600">No qualified calls.</td></tr></tbody></table></div></div>
+      </div>
+
+      <div id="page-screener" class="page">
+        <div class="mb-6"><div class="tiny text-slate-500">Signal discovery</div><h1 class="text-3xl font-extrabold">Breakout Radar</h1><p class="text-slate-400 mt-1">A compact view of the strongest opportunities supplied by the report feed.</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5"><div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Top setup</div><div id="radar-top" class="text-xl font-bold mt-2">--</div><div id="radar-top-detail" class="text-xs text-slate-500 mt-1">--</div></div><div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Breakouts</div><div id="radar-count" class="metric-num text-2xl font-bold mt-2">0</div><div class="text-xs text-slate-500 mt-1">qualified opportunities</div></div><div class="glass rounded-2xl p-5"><div class="tiny text-slate-500">Scanner status</div><div id="radar-status" class="text-xl font-bold mt-2">LIVE</div><div class="text-xs text-slate-500 mt-1">Report feed</div></div></div>
+        <div class="glass rounded-2xl p-5"><div class="tiny text-slate-500 mb-3">Scanner note</div><div id="radar-note" class="text-slate-300 leading-7">Waiting for current feed…</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
 </body>
 </html>
