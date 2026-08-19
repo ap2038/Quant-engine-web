@@ -1,0 +1,28 @@
+name: Live Market Data Publisher
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * 1-5"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance requests
+
+      - name: Publish live market data
+        env:
+          GIST_ID: "941e59e4a43b6cbc639dd716757bfc57"
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: python scripts/publish_market_data.py
