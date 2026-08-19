@@ -1,0 +1,8 @@
+{
+  "updated_at": null,
+  "source": "pending first live GitHub Actions snapshot",
+  "market_status": {"india": "CLOSED", "us": "CLOSED"},
+  "india": {"nifty": null, "sensex": null},
+  "us_markets": {"dow": null, "sp500": null, "nasdaq": null},
+  "gift_nifty": {"value": null, "change": null, "change_pct": null, "signal": "Awaiting dedicated GIFT NIFTY feed"}
+}
