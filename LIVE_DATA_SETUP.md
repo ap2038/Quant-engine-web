@@ -1,25 +1,47 @@
 # Live market data layer
 
-`/api/global-market` is the server-side market feed used by `app.js`.
+The dashboard is a static site and reads `dashboard_data.json` from the existing GitHub Gist. Live market data is now published into that same Gist every 5 minutes by GitHub Actions.
 
-## What it provides
-- NIFTY and SENSEX live snapshots
-- Dow Jones, S&P 500 and Nasdaq live snapshots
-- GIFT NIFTY when an Upstox Global Index token is configured
-- Source status and server timestamp
+## Live flow
 
-The Yahoo requests run server-side to avoid browser CORS restrictions. Yahoo's chart endpoint is not suitable for direct browser calls because it does not expose browser CORS headers.
+`Yahoo Finance market feed -> GitHub Actions -> dashboard_data.json Gist -> Quant Engine UI`
 
-## Deployment
-The repository now includes a Vercel-compatible `api/global-market.js` function. Deploy the repository on Vercel (or another Node/serverless host that supports `/api/*.js`). A static-only GitHub Pages deployment will continue to use the existing Gist report feed for fields that the live API cannot supply.
+This avoids requiring Vercel or another serverless host.
+
+## One-time GitHub secret required
+
+Create a GitHub Personal Access Token with **gist** permission and add it to:
+
+`Quant-engine-web -> Settings -> Secrets and variables -> Actions -> New repository secret`
+
+Secret name:
+
+`GIST_TOKEN`
+
+The token is used only by the scheduled publisher to update Gist `941e59e4a43b6cbc639dd716757bfc57`.
+
+## Automatic refresh
+
+`.github/workflows/live-market.yml` runs every 5 minutes on weekdays and can also be started manually from Actions.
+
+The publisher updates:
+
+- NIFTY
+- SENSEX
+- Dow Jones
+- S&P 500
+- Nasdaq
+- market status
+- live-feed timestamp/status
+
+The dashboard refreshes the Gist every 30 seconds.
 
 ## GIFT NIFTY
-Set the following environment variable on the server:
 
-`UPSTOX_ACCESS_TOKEN=<your Upstox access token>`
+GIFT NIFTY is supported as an optional upstream field through the existing report data. For a direct live GIFT NIFTY feed, configure an Upstox access token and the corresponding `GLOBAL_INDEX` instrument key in the upstream publisher.
 
-Optionally override:
+GIFT Nifty trades on NSE IX in two sessions, including an evening/overnight session, which is why it is treated separately from NSE cash-market status.
 
-`UPSTOX_GIFT_NIFTY_KEY=GLOBAL_INDEX|SGX NIFTY`
+## Important
 
-Upstox documents GIFT NIFTY as a `GLOBAL_INDEX` instrument and provides LTP/quote APIs for global indexes.
+The dashboard uses the **current unversioned Gist raw URL**. Do not replace it with a revision-pinned raw URL, otherwise future Gist updates will not appear on the screen.
