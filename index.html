@@ -2,7 +2,8 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#07090d">
   <title>Quant Engine | Market Command Center</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;img-src data:;font-src https://fonts.gstatic.com;connect-src 'self' https://gist.githubusercontent.com;frame-ancestors 'none';base-uri 'none';form-action 'none';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -10,7 +11,52 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{ink:'#07090d',panel:'#0e1218',line:'#1d2530',accent:'#38bdf8'}}}};</script>
-  <style>:root{color-scheme:dark}html,body{background:#07090d;color:#e6edf6;font-family:Inter,sans-serif}body{background-image:radial-gradient(circle at 10% 0%,rgba(56,189,248,.08),transparent 28%),radial-gradient(circle at 85% 10%,rgba(168,85,247,.08),transparent 24%)}.glass{background:linear-gradient(180deg,rgba(17,24,33,.93),rgba(11,15,21,.93));backdrop-filter:blur(16px);border:1px solid rgba(148,163,184,.12);box-shadow:0 18px 50px rgba(0,0,0,.22)}.glow{box-shadow:0 0 0 1px rgba(56,189,248,.15),0 0 36px rgba(56,189,248,.08)}.scan-dot{animation:pulse 1.8s infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.75)}}.page{display:none}.page.active{display:block}.metric-num{letter-spacing:-.04em}</style>
+  <style>
+    :root{color-scheme:dark}
+    html,body{background:#07090d;color:#e6edf6;font-family:Inter,sans-serif;min-width:320px}
+    body{background-image:radial-gradient(circle at 10% 0%,rgba(56,189,248,.08),transparent 28%),radial-gradient(circle at 85% 10%,rgba(168,85,247,.08),transparent 24%);overflow-x:hidden}
+    .glass{background:linear-gradient(180deg,rgba(17,24,33,.93),rgba(11,15,21,.93));backdrop-filter:blur(16px);border:1px solid rgba(148,163,184,.12);box-shadow:0 18px 50px rgba(0,0,0,.22)}
+    .glow{box-shadow:0 0 0 1px rgba(56,189,248,.15),0 0 36px rgba(56,189,248,.08)}
+    .scan-dot{animation:pulse 1.8s infinite}
+    @keyframes pulse{50%{opacity:.35;transform:scale(.75)}}
+    .page{display:none}.page.active{display:block}.metric-num{letter-spacing:-.04em}
+    .mobile-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+    .mobile-scroll>table{min-width:680px}
+    @media (max-width: 767px){
+      body{font-size:14px}
+      header{position:sticky;top:0}
+      header .max-w-\[1700px\]{padding-left:14px;padding-right:14px}
+      header .flex.items-center.justify-between{align-items:flex-start;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+      header .flex.items-center.gap-3{width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px;margin-top:8px}
+      main{padding-left:12px!important;padding-right:12px!important;padding-top:14px!important;padding-bottom:24px!important}
+      nav{overflow-x:auto;flex-wrap:nowrap!important;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+      nav .nav-item{flex:0 0 auto;white-space:nowrap}
+      #call-card{min-height:210px}
+      #call-status{font-size:2.4rem;line-height:1}
+      .metric-num{font-size:1.7rem}
+      .glass{border-radius:16px!important}
+      .grid{gap:12px!important}
+      .mobile-tight{padding:14px!important}
+      .mobile-scroll{margin-left:-2px;margin-right:-2px}
+      .mobile-scroll table{font-size:12px}
+      .mobile-scroll th,.mobile-scroll td{padding:10px 12px!important}
+      #page-overview .text-3xl{font-size:1.8rem;line-height:1.05}
+      #page-overview .text-2xl{font-size:1.35rem}
+      #page-overview .text-xl{font-size:1.15rem}
+      #page-overview .text-lg{font-size:1rem}
+      #page-screener .text-2xl{font-size:1.4rem}
+    }
+    @media (max-width: 420px){
+      header .tracking-tight{font-size:1rem}
+      header .tracking-\[\.25em\]{font-size:8px}
+      #call-status{font-size:2.15rem}
+      #call-detail{font-size:13px}
+      #call-card .grid.grid-cols-3{gap:6px!important}
+      #call-card .grid.grid-cols-3 .text-2xl{font-size:1.2rem}
+      .px-5{padding-left:12px!important;padding-right:12px!important}
+      .py-5{padding-top:14px!important;padding-bottom:14px!important}
+    }
+  </style>
 </head>
 <body class="min-h-screen">
 <header class="sticky top-0 z-20 border-b border-slate-800/70 bg-[#07090d]/90 backdrop-blur-xl"><div class="max-w-[1700px] mx-auto px-5 py-4 flex items-center justify-between gap-5"><div><div class="text-lg font-extrabold tracking-tight">QUANT<span class="text-sky-400">ENGINE</span></div><div class="text-[10px] uppercase tracking-[.25em] text-slate-500">Trader Market Command Center</div></div><div class="flex items-center gap-3 text-xs"><span id="global-source-status" class="text-xs font-bold text-slate-400">CONNECTING</span><span id="status-indicator" class="w-2 h-2 rounded-full bg-slate-500"></span><span>India: <b id="market-status-text">--</b></span><span class="hidden md:inline text-slate-600">|</span><span id="last-sync" class="text-slate-500">--:--:--</span></div></div></header>
@@ -21,9 +67,9 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">NIFTY Close / Live</div><div id="level-nifty" class="text-3xl font-extrabold metric-num mt-2">--</div><div id="level-nifty-change" class="text-sm mt-1 text-slate-400">--</div><div class="grid grid-cols-3 gap-2 mt-4 text-xs"><div><span class="text-slate-600">High</span><div id="nifty-high">--</div></div><div><span class="text-slate-600">Low</span><div id="nifty-low">--</div></div><div><span class="text-slate-600">Range</span><div id="nifty-range">--</div></div></div></div><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">SENSEX Close / Live</div><div id="level-sensex" class="text-3xl font-extrabold metric-num mt-2">--</div><div id="level-sensex-change" class="text-sm mt-1 text-slate-400">--</div><div class="grid grid-cols-3 gap-2 mt-4 text-xs"><div><span class="text-slate-600">High</span><div id="sensex-high">--</div></div><div><span class="text-slate-600">Low</span><div id="sensex-low">--</div></div><div><span class="text-slate-600">Range</span><div id="sensex-range">--</div></div></div></div><div class="glass rounded-2xl p-5"><div class="flex justify-between"><div class="text-xs uppercase tracking-wider text-slate-500">GIFT NIFTY</div><div id="gift-state" class="text-[10px] text-slate-500">GLOBAL CUE</div></div><div id="level-gift" class="text-3xl font-extrabold metric-num mt-2">--</div><div id="level-gift-change" class="text-sm mt-1 text-slate-400">--</div><div id="gift-signal" class="text-sm font-bold text-sky-300 mt-3">--</div><div id="gift-time" class="text-[10px] text-slate-600 mt-1">--</div></div></div>
 <div class="glass rounded-2xl p-5 mt-4"><div class="flex items-center justify-between mb-4"><div><div class="text-xs uppercase tracking-[.2em] text-slate-500">US Market Pulse</div><div class="text-sm text-slate-400 mt-1">Server-side live snapshot • refreshed every 30s</div></div><div id="us-data-time" class="text-[10px] text-slate-600">--</div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="bg-slate-950/60 rounded-xl p-4"><div class="text-xs text-slate-500">Dow Jones</div><div id="us-dow" class="text-2xl font-extrabold metric-num mt-2">--</div></div><div class="bg-slate-950/60 rounded-xl p-4"><div class="text-xs text-slate-500">S&amp;P 500</div><div id="us-sp" class="text-2xl font-extrabold metric-num mt-2">--</div></div><div class="bg-slate-950/60 rounded-xl p-4"><div class="text-xs text-slate-500">Nasdaq</div><div id="us-nasdaq" class="text-2xl font-extrabold metric-num mt-2">--</div></div></div></div>
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4"><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">India VIX</div><div id="ui-vix" class="text-3xl font-extrabold mt-2">--</div><div id="vix-regime" class="text-xs text-slate-500 mt-1">--</div></div><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">Sentiment</div><div id="ui-sentiment" class="text-2xl font-bold mt-2">--</div><div id="sentiment-detail" class="text-xs text-slate-500 mt-1">--</div></div><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">Breadth</div><div id="breadth-main" class="text-2xl font-bold mt-2">--</div><div id="breadth-detail" class="text-xs text-slate-500 mt-1">--</div><div class="flex h-1.5 rounded-full overflow-hidden bg-slate-800 mt-3"><div id="breadth-bar-adv" class="bg-emerald-400" style="width:50%"></div><div id="breadth-bar-dec" class="bg-rose-400" style="width:50%"></div></div></div><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-wider text-slate-500">OI / Rotation</div><div id="ui-oi-data" class="text-sm font-semibold mt-2 text-slate-300">--</div><div id="rotation-label" class="text-xs text-slate-500 mt-2">--</div></div></div>
-<div class="glass rounded-2xl p-5 mt-4"><div class="flex justify-between items-center mb-4"><div><div class="text-xs uppercase tracking-[.2em] text-slate-500">Breakout Radar</div><div class="text-sm text-slate-400 mt-1">Top liquid opportunities from the report feed</div></div><div id="radar-count" class="text-xs text-slate-500">0</div></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-800"><tr><th class="px-5 py-3 text-left">#</th><th class="px-5 py-3 text-left">Symbol</th><th class="px-5 py-3 text-right">Price</th><th class="px-5 py-3 text-right">Volume</th><th class="px-5 py-3 text-right">Score</th><th class="px-5 py-3 text-right">Pressure</th><th class="px-5 py-3 text-right">Setup</th></tr></thead><tbody id="top-stocks-table"><tr><td colspan="7" class="px-5 py-8 text-center text-slate-600">Loading...</td></tr></tbody></table></div><div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"><div><div class="text-[10px] uppercase text-slate-600">Top Radar</div><div id="radar-top" class="text-xl font-bold mt-1">--</div></div><div id="radar-top-detail" class="text-sm text-slate-500">--</div></div></div>
+<div class="glass rounded-2xl p-5 mt-4"><div class="flex justify-between items-center mb-4"><div><div class="text-xs uppercase tracking-[.2em] text-slate-500">Breakout Radar</div><div class="text-sm text-slate-400 mt-1">Top liquid opportunities from the report feed</div></div><div id="radar-count" class="text-xs text-slate-500">0</div></div><div class="mobile-scroll"><table class="w-full text-sm"><thead class="text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-800"><tr><th class="px-5 py-3 text-left">#</th><th class="px-5 py-3 text-left">Symbol</th><th class="px-5 py-3 text-right">Price</th><th class="px-5 py-3 text-right">Volume</th><th class="px-5 py-3 text-right">Score</th><th class="px-5 py-3 text-right">Pressure</th><th class="px-5 py-3 text-right">Setup</th></tr></thead><tbody id="top-stocks-table"><tr><td colspan="7" class="px-5 py-8 text-center text-slate-600">Loading...</td></tr></tbody></table></div><div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"><div><div class="text-[10px] uppercase text-slate-600">Top Radar</div><div id="radar-top" class="text-xl font-bold mt-1">--</div></div><div id="radar-top-detail" class="text-sm text-slate-500">--</div></div></div>
 </section>
-<section id="page-positions" class="page"><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-[.2em] text-slate-500">Qualified Calls &amp; Trades</div><div class="overflow-x-auto mt-4"><table class="w-full text-sm"><thead class="text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-800"><tr><th class="px-5 py-3 text-left">Symbol</th><th class="px-5 py-3 text-right">Direction</th><th class="px-5 py-3 text-right">Entry</th><th class="px-5 py-3 text-right">SL</th><th class="px-5 py-3 text-right">Target</th><th class="px-5 py-3 text-right">Status / P&amp;L</th></tr></thead><tbody id="positions-table"></tbody></table></div></div></section>
+<section id="page-positions" class="page"><div class="glass rounded-2xl p-5"><div class="text-xs uppercase tracking-[.2em] text-slate-500">Qualified Calls &amp; Trades</div><div class="mobile-scroll mt-4"><table class="w-full text-sm"><thead class="text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-800"><tr><th class="px-5 py-3 text-left">Symbol</th><th class="px-5 py-3 text-right">Direction</th><th class="px-5 py-3 text-right">Entry</th><th class="px-5 py-3 text-right">SL</th><th class="px-5 py-3 text-right">Target</th><th class="px-5 py-3 text-right">Status / P&amp;L</th></tr></thead><tbody id="positions-table"></tbody></table></div></div></section>
 <section id="page-screener" class="page"><div class="glass rounded-2xl p-6"><div class="text-xs uppercase tracking-[.2em] text-slate-500">Breakout Radar</div><div class="text-2xl font-bold mt-2">Market-wide opportunity matrix</div><p class="text-sm text-slate-500 mt-2">This view is driven by the report feed. A stock becomes a call only when the Phase 1 logic confirms the setup.</p><div class="mt-6 bg-slate-950/60 rounded-xl p-5"><div id="radar-note" class="text-sm text-slate-400">Waiting for live report data.</div></div></div></section>
 </main>
 <script src="app.js?v=202608192335"></script>
