@@ -1,0 +1,31 @@
+{
+  "market_context": {
+    "status": "OPEN|CLOSED|PREOPEN|POSTMARKET",
+    "vix": 0,
+    "sentiment": "BULLISH|BEARISH|NEUTRAL",
+    "oi_summary": "string"
+  },
+  "market_levels": {
+    "nifty": {"close": 0, "prev_close": 0, "change": 0, "change_pct": 0},
+    "sensex": {"close": 0, "prev_close": 0, "change": 0, "change_pct": 0},
+    "gift_nifty": {"value": 0, "change": 0, "change_pct": 0, "timestamp": "ISO-8601"},
+    "us_markets": {
+      "status": "OPEN|CLOSED|PREOPEN",
+      "dow": {"value": 0, "change": 0, "change_pct": 0},
+      "sp500": {"value": 0, "change": 0, "change_pct": 0},
+      "nasdaq": {"value": 0, "change": 0, "change_pct": 0},
+      "timestamp": "ISO-8601"
+    },
+    "updated_at": "ISO-8601"
+  },
+  "trades": {
+    "SYMBOL": {
+      "status": "OPEN|CLOSED",
+      "direction": "BUY|SELL|CE|PE|LONG|SHORT",
+      "entry_price": 0,
+      "sl": 0,
+      "pnl": 0,
+      "updated_at": "ISO-8601"
+    }
+  }
+}
