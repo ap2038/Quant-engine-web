@@ -1,19 +1,65 @@
-const GIST_URL='https://gist.githubusercontent.com/ap2038/941e59e4a43b6cbc639dd716757bfc57/raw/dashboard_data.json';
-function el(id){return document.getElementById(id)}
-function setText(id,text,klass){const n=el(id);if(n){n.textContent=text??'--';if(klass)n.className=klass}}
-function num(v,d=2){return typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d}):'--'}
-function pct(v){return typeof v==='number'&&Number.isFinite(v)?`${v>=0?'+':''}${v.toFixed(2)}%`:'--'}
-function tone(v){return typeof v==='number'?(v>0?'text-emerald-400':v<0?'text-rose-400':'text-slate-400'):'text-slate-400'}
-function pill(s){const m={OPEN:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20','PRE-OPEN':'bg-yellow-500/10 text-yellow-300 border-yellow-500/20','POST-MARKET':'bg-sky-500/10 text-sky-300 border-sky-500/20','AFTER-HOURS':'bg-sky-500/10 text-sky-300 border-sky-500/20',CLOSED:'bg-slate-500/10 text-slate-400 border-slate-500/20'};return `<span class="px-2.5 py-1 rounded-full border text-[10px] font-bold ${m[s]||m.CLOSED}">${s||'--'}</span>`}
-function marketClock(tz){const p=new Intl.DateTimeFormat('en-IN',{timeZone:tz,weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()),wd=p.find(x=>x.type==='weekday')?.value,h=+(p.find(x=>x.type==='hour')?.value||0),m=+(p.find(x=>x.type==='minute')?.value||0),t=h*60+m;if(tz==='Asia/Kolkata'){if(['Sat','Sun'].includes(wd))return{status:'CLOSED',label:'India Market Closed'};if(t>=540&&t<555)return{status:'PRE-OPEN',label:'India Pre-Open'};if(t>=555&&t<930)return{status:'OPEN',label:'India Market Open'};if(t>=930&&t<960)return{status:'POST-MARKET',label:'India Post-Market'};return{status:'CLOSED',label:'India Market Closed'}}if(['Sat','Sun'].includes(wd))return{status:'CLOSED',label:'US Market Closed'};if(t>=510&&t<570)return{status:'PRE-OPEN',label:'US Pre-Market'};if(t>=570&&t<960)return{status:'OPEN',label:'US Market Open'};if(t>=960&&t<1200)return{status:'AFTER-HOURS',label:'US After-Hours'};return{status:'CLOSED',label:'US Market Closed'}}
-function renderClock(){const i=marketClock('Asia/Kolkata'),u=marketClock('America/New_York');setText('india-market-label',i.label);setText('us-market-label',u.label);if(el('india-market-status'))el('india-market-status').innerHTML=pill(i.status);if(el('us-market-status'))el('us-market-status').innerHTML=pill(u.status);setText('market-status-text',i.status);if(el('status-indicator'))el('status-indicator').className=i.status==='OPEN'?'w-2 h-2 rounded-full bg-emerald-400 scan-dot':'w-2 h-2 rounded-full bg-slate-500'}
-function valid(data){if(!data||typeof data!=='object')return false;if(data.trades){for(const [s,d] of Object.entries(data.trades)){if(typeof s!=='string'||s.length>30||!d||!['OPEN','CLOSED'].includes(d.status))return false}}return true}
-function setIndex(prefix,o){if(!o)return;setText(`level-${prefix}`,num(o.close??o.value));const c=el(`level-${prefix}-change`);if(c){c.textContent=`${num(o.change)} pts • ${pct(o.change_pct)}`;c.className=`text-sm mt-1 ${tone(o.change_pct)}`}setText(`${prefix}-high`,num(o.high));setText(`${prefix}-low`,num(o.low));setText(`${prefix}-range`,typeof o.high==='number'&&typeof o.low==='number'?num(o.high-o.low):'--');setText(`${prefix}-state`,o.regime||o.trend||'LIVE')}
-function renderMarketData(data){const l=data.market_levels||{},n=l.nifty||{},s=l.sensex||{},g=l.gift_nifty||{},u=l.us_markets||{};setIndex('nifty',n);setIndex('sensex',s);setText('level-gift',num(g.value));const gc=el('level-gift-change');if(gc){gc.textContent=`${num(g.change)} pts • ${pct(g.change_pct)}`;gc.className=`text-sm mt-1 ${tone(g.change_pct)}`}setText('gift-state',g.signal||g.regime||'GLOBAL CUE');setText('gift-signal',g.signal||g.regime||'--');setText('gift-time',g.timestamp||l.updated_at||'--');const put=(id,o)=>{if(!el(id))return;el(id).textContent=`${num(o?.value)} ${pct(o?.change_pct)}`;el(id).className=`metric-num text-lg font-bold mt-2 ${tone(o?.change_pct)}`};put('us-dow',u.dow);put('us-sp',u.sp500);put('us-nasdaq',u.nasdaq);setText('us-data-time',u.timestamp||l.updated_at||'--');setText('global-cue',g.change_pct>0.25?'POSITIVE OPEN CUE':g.change_pct<-0.25?'NEGATIVE OPEN CUE':'NEUTRAL');setText('global-cue-detail',u.sp500?.change_pct>0.5?'US risk-on backdrop':u.sp500?.change_pct<-0.5?'US risk-off backdrop':'Global cues mixed')}
-function renderContext(ctx={}){const v=ctx.vix;setText('ui-vix',typeof v==='number'?v.toFixed(2):'--');setText('vix-regime',v>20?'Elevated volatility':v>15?'Active volatility':'Low volatility');const s=ctx.sentiment||'NEUTRAL';setText('ui-sentiment',s,`metric-num text-2xl font-bold mt-2 ${s==='BULLISH'?'text-emerald-400':s==='BEARISH'?'text-rose-400':'text-slate-300'}`);setText('sentiment-detail',ctx.sentiment_score!=null?`Score ${ctx.sentiment_score}`:'Composite regime');setText('ui-oi-data',ctx.oi_summary||'No OI data');const b=ctx.breadth||{},a=Number(b.advancers||ctx.advancers||0),d=Number(b.decliners||ctx.decliners||0),tot=a+d;setText('breadth-main',tot?`${a>d?'ADV':'DEC'} ${Math.abs(a-d)}`:'--');setText('breadth-detail',tot?`${a} / ${d}`:'Adv / Dec');if(el('breadth-bar-adv'))el('breadth-bar-adv').style.width=`${tot?a/tot*100:50}%`;if(el('breadth-bar-dec'))el('breadth-bar-dec').style.width=`${tot?d/tot*100:50}%`;setText('rotation-label',ctx.rotation||ctx.sector_rotation||'--')}
-function renderCall(data){const open=Object.entries(data.trades||{}).filter(([,d])=>d?.status==='OPEN');setText('call-count',open.length);if(open.length){setText('call-status','CALL GIVEN','text-4xl md:text-5xl font-extrabold mt-4 text-emerald-300');setText('call-detail',open.slice(0,3).map(([s,d])=>`${s} ${d.direction||''}`.trim()).join(' • '),'text-slate-300 mt-2');setText('call-confidence',open[0][1].confidence||open[0][1].score||'HIGH');setText('call-bias',(open[0][1].direction||'').toUpperCase())}else{setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');setText('call-confidence','--');setText('call-bias','NEUTRAL')}}
-function renderStocks(stocks=[]){const body=el('top-stocks-table');if(!body)return;body.innerHTML='';if(!stocks.length){body.innerHTML='<tr><td colspan="7" class="px-5 py-8 text-center text-slate-600">No stock opportunities in the current feed.</td></tr>';return}stocks.slice(0,10).forEach((s,i)=>{const tr=document.createElement('tr');const vals=[i+1,s.symbol||'--',num(s.price??s.ltp),s.volume??'--',s.score??'--',s.type||s.pressure||'--',s.setup||s.signal||'WATCH'];vals.forEach((v,j)=>{const td=document.createElement('td');td.className=`px-5 py-3 ${j===0?'text-slate-600':j===1?'font-bold text-white':j>=2&&j<=4?'text-right font-mono':'text-right'}`;td.textContent=v;tr.appendChild(td)});body.appendChild(tr)});setText('radar-top',stocks[0]?.symbol||'--');setText('radar-top-detail',stocks[0]?`${stocks[0].setup||stocks[0].signal||'Watch'} • score ${stocks[0].score??'--'}`:'No current setup');setText('radar-count',stocks.length)}
-function renderTrades(trades={}){const body=el('positions-table');if(!body)return;body.innerHTML='';const items=Object.entries(trades);if(!items.length){body.innerHTML='<tr><td colspan="6" class="px-5 py-10 text-center text-slate-600">No qualified calls.</td></tr>';return}items.forEach(([s,d])=>{const tr=document.createElement('tr');[['symbol',s],['direction',d.direction||'--'],['entry',d.entry_price??'--'],['sl',d.sl??'--'],['target',d.target??d.t1??'--']].forEach(([,v],i)=>{const td=document.createElement('td');td.className=`px-5 py-4 ${i===0?'font-bold text-white':'text-right font-mono'}`;td.textContent=i>=2&&typeof v==='number'?num(v):v;tr.appendChild(td)});const st=document.createElement('td');st.className='px-5 py-4 text-right';if(d.status==='OPEN')st.innerHTML='<span class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[10px] font-bold">OPEN</span>';else{st.textContent=`${Number(d.pnl||0)>=0?'+':''}${num(Number(d.pnl||0))} pts`;st.className+=Number(d.pnl||0)>=0?' text-emerald-400':' text-rose-400'}tr.appendChild(st);body.appendChild(tr)})}
-async function fetchData(){renderClock();try{const r=await fetch(`${GIST_URL}?t=${Date.now()}`);if(!r.ok)throw new Error(`Gist HTTP ${r.status}`);const data=await r.json();if(!valid(data))throw new Error('Report payload validation failed');const live=data.live_feed?.status==='LIVE';setText('global-source-status',live?'LIVE FEED':'REPORT FEED',live?'text-xs font-bold text-emerald-300':'text-xs font-bold text-amber-300');renderMarketData(data);renderContext(data.market_context||{});renderCall(data);renderStocks(data.top_stocks||[]);renderTrades(data.trades||{});setText('last-sync',new Date().toLocaleTimeString('en-IN',{hour12:false}));}catch(err){console.error(err);setText('global-source-status','STALE','text-xs font-bold text-rose-300');setText('radar-note',`Live report feed unavailable: ${err.message}`,'text-sm text-rose-300')}}
-function navigate(pageId){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));el(`page-${pageId}`)?.classList.add('active');el(`nav-${pageId}`)?.classList.add('active');fetchData()}
-renderClock();fetchData();setInterval(fetchData,30000);setInterval(renderClock,15000);
+const MARKET_URL = './data/market.json';
+const REPORT_URL = 'https://gist.githubusercontent.com/ap2038/941e59e4a43b6cbc639dd716757bfc57/raw/dashboard_data.json';
+
+const $ = id => document.getElementById(id);
+const setText = (id, value, cls) => { const n = $(id); if (!n) return; n.textContent = value ?? '--'; if (cls) n.className = cls; };
+const num = v => typeof v === 'number' && Number.isFinite(v) ? v.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '--';
+const pct = v => typeof v === 'number' && Number.isFinite(v) ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '--';
+const tone = v => typeof v === 'number' ? (v > 0 ? 'text-emerald-400' : v < 0 ? 'text-rose-400' : 'text-slate-400') : 'text-slate-400';
+
+function status(tz, india) {
+  const p = new Intl.DateTimeFormat('en-IN', {timeZone:tz, weekday:'short', hour:'2-digit', minute:'2-digit', hour12:false}).formatToParts(new Date());
+  const wd = p.find(x=>x.type==='weekday')?.value;
+  const h = Number(p.find(x=>x.type==='hour')?.value || 0), m = Number(p.find(x=>x.type==='minute')?.value || 0), t = h*60+m;
+  if (wd === 'Sat' || wd === 'Sun') return 'CLOSED';
+  if (india) return t>=555 && t<930 ? 'OPEN' : t>=540 && t<555 ? 'PRE-OPEN' : t>=930 && t<960 ? 'POST-MARKET' : 'CLOSED';
+  return t>=570 && t<960 ? 'OPEN' : t>=510 && t<570 ? 'PRE-OPEN' : t>=960 && t<1200 ? 'AFTER-HOURS' : 'CLOSED';
+}
+
+function renderClock() {
+  const india = status('Asia/Kolkata', true), us = status('America/New_York', false);
+  setText('market-status-text', india);
+  setText('india-market-label', `India Market ${india.replace('-', ' ')}`);
+  setText('us-market-label', `US Market ${us.replace('-', ' ')}`);
+  setText('global-cue', india === 'OPEN' ? 'LIVE INTRADAY' : 'MARKET CLOSED / PREP');
+  if ($('india-market-status')) $('india-market-status').textContent = india;
+  if ($('us-market-status')) $('us-market-status').textContent = us;
+  if ($('status-indicator')) $('status-indicator').className = india === 'OPEN' ? 'w-2 h-2 rounded-full bg-emerald-400 scan-dot' : 'w-2 h-2 rounded-full bg-slate-500';
+}
+
+function renderMarket(d) {
+  const n = d?.india?.nifty, s = d?.india?.sensex, u = d?.us_markets || {}, g = d?.gift_nifty || {};
+  if (n) { setText('level-nifty', num(n.value)); const c=$('level-nifty-change'); if(c){c.textContent=`${num(n.change)} pts • ${pct(n.change_pct)}`;c.className=`text-sm mt-1 ${tone(n.change_pct)}`;} }
+  if (s) { setText('level-sensex', num(s.value)); const c=$('level-sensex-change'); if(c){c.textContent=`${num(s.change)} pts • ${pct(s.change_pct)}`;c.className=`text-sm mt-1 ${tone(s.change_pct)}`;} }
+  setText('level-gift', num(g.value)); const gc=$('level-gift-change'); if(gc){gc.textContent=`${num(g.change)} pts • ${pct(g.change_pct)}`;gc.className=`text-sm mt-1 ${tone(g.change_pct)}`;}
+  setText('gift-state', g.value == null ? 'FEED PENDING' : 'LIVE SNAPSHOT'); setText('gift-signal', g.signal || '--'); setText('gift-time', d?.updated_at || '--');
+  const put=(id,o)=>{const x=$(id);if(!x)return;x.textContent=`${num(o?.value)} ${pct(o?.change_pct)}`;x.className=`metric-num text-lg font-bold mt-2 ${tone(o?.change_pct)}`;};
+  put('us-dow',u.dow); put('us-sp',u.sp500); put('us-nasdaq',u.nasdaq); setText('us-data-time',d?.updated_at||'--');
+  setText('global-source-status', d?.updated_at ? 'LIVE SNAPSHOT' : 'WAITING', d?.updated_at ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300');
+}
+
+function renderCall(report) {
+  const trades=report?.trades||{}; const open=Object.entries(trades).filter(([,x])=>x?.status==='OPEN');
+  setText('call-count', open.length);
+  if(open.length){setText('call-status','CALL GIVEN','text-4xl md:text-5xl font-extrabold mt-4 text-emerald-300');setText('call-detail',open.slice(0,3).map(([s,x])=>`${s} ${x.direction||''}`.trim()).join(' • '),'text-slate-300 mt-2');setText('call-confidence',open[0][1].confidence||open[0][1].score||'HIGH');setText('call-bias',(open[0][1].direction||'').toUpperCase());}
+  else {setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');setText('call-confidence','--');setText('call-bias','NEUTRAL');}
+  setText('ui-vix',typeof report?.market_context?.vix==='number'?report.market_context.vix.toFixed(2):'--'); setText('ui-sentiment',report?.market_context?.sentiment||'NEUTRAL'); setText('ui-oi-data',report?.market_context?.oi_summary||'No OI data');
+}
+
+function renderStocks(report) {
+  const body=$('top-stocks-table'); if(!body)return; body.innerHTML=''; const stocks=Array.isArray(report?.top_stocks)?report.top_stocks.slice(0,10):[];
+  if(!stocks.length){body.innerHTML='<tr><td colspan="7" class="px-5 py-8 text-center text-slate-600">No breakout data in report feed.</td></tr>';return;}
+  stocks.forEach((s,i)=>{const tr=document.createElement('tr');[i+1,s.symbol||'--',num(s.price??s.ltp),s.volume??'--',s.score??'--',s.type||s.pressure||'--',s.setup||s.signal||'WATCH'].forEach((v,j)=>{const td=document.createElement('td');td.className=`px-5 py-3 ${j===0?'text-slate-600':j===1?'font-bold text-white':'text-right font-mono'}`;td.textContent=v;tr.appendChild(td)});body.appendChild(tr);});
+}
+
+async function getJSON(url){const r=await fetch(`${url}?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);return r.json();}
+
+async function load(){
+  renderClock();
+  try { renderMarket(await getJSON(MARKET_URL)); } catch(e) { console.warn('Market snapshot unavailable',e); setText('global-source-status','DATA OFFLINE','text-xs font-bold text-rose-300'); }
+  try { const r=await getJSON(REPORT_URL); renderCall(r); renderStocks(r); setText('last-sync',new Date().toLocaleTimeString('en-IN',{hour12:false})); } catch(e) { console.warn('Report feed unavailable',e); setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300'); setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2'); }
+}
+
+function navigate(pageId){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));$(`page-${pageId}`)?.classList.add('active');$(`nav-${pageId}`)?.classList.add('active');load();}
+
+window.addEventListener('DOMContentLoaded',()=>{renderClock();setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');load();setInterval(load,30000);setInterval(renderClock,15000);});
