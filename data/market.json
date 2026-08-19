@@ -1,8 +1,48 @@
 {
-  "updated_at": null,
-  "source": "pending first live GitHub Actions snapshot",
-  "market_status": {"india": "CLOSED", "us": "CLOSED"},
-  "india": {"nifty": null, "sensex": null},
-  "us_markets": {"dow": null, "sp500": null, "nasdaq": null},
-  "gift_nifty": {"value": null, "change": null, "change_pct": null, "signal": "Awaiting dedicated GIFT NIFTY feed"}
+  "updated_at": "2026-08-19T23:24:21.017073+05:30",
+  "source": "GitHub Actions / Yahoo Finance server-side snapshot",
+  "market_status": {
+    "india": "CLOSED",
+    "us": "OPEN"
+  },
+  "india": {
+    "nifty": {
+      "value": 24078.30078125,
+      "change": 29.75,
+      "change_pct": 0.1237080781732347,
+      "timestamp": "2026-08-19T15:25:00+05:30"
+    },
+    "sensex": {
+      "value": 76909.6796875,
+      "change": 13.328125,
+      "change_pct": 0.01733258435436813,
+      "timestamp": "2026-08-19T15:25:00+05:30"
+    }
+  },
+  "us_markets": {
+    "dow": {
+      "value": 53471.44140625,
+      "change": 15.11328125,
+      "change_pct": 0.02827220233807548,
+      "timestamp": "2026-08-19T13:50:00-04:00"
+    },
+    "sp500": {
+      "value": 7718.31982421875,
+      "change": 2.6796875,
+      "change_pct": 0.03473059205090223,
+      "timestamp": "2026-08-19T13:50:00-04:00"
+    },
+    "nasdaq": {
+      "value": 26354.234375,
+      "change": 14.4296875,
+      "change_pct": 0.0547828188978583,
+      "timestamp": "2026-08-19T13:50:00-04:00"
+    }
+  },
+  "gift_nifty": {
+    "value": null,
+    "change": null,
+    "change_pct": null,
+    "signal": "Awaiting dedicated GIFT NIFTY feed"
+  }
 }
