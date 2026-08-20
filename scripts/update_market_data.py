@@ -1,13 +1,18 @@
 import json
-import math
+import os
 from datetime import datetime
+from io import StringIO
 from zoneinfo import ZoneInfo
 
+import pandas as pd
+import requests
 import yfinance as yf
 
 IST = ZoneInfo("Asia/Kolkata")
 ET = ZoneInfo("America/New_York")
 OUT = "data/market.json"
+DHAN_BASE = "https://api.dhan.co/v2"
+INSTRUMENT_MASTER = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
 
 
 def quote(ticker):
@@ -33,6 +38,133 @@ def quote(ticker):
         "change_pct": ((last / prev) - 1) * 100 if prev else 0,
         "timestamp": data.index[-1].isoformat(),
     }
+
+
+def dhan_headers():
+    token = os.environ.get("DHAN_ACCESS_TOKEN")
+    client_id = os.environ.get("DHAN_CLIENT_ID")
+    if not token or not client_id:
+        return None
+    return {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "access-token": token,
+        "client-id": client_id,
+    }
+
+
+def resolve_gift_nifty():
+    """Resolve the current GIFT Nifty index Security ID from Dhan's instrument master."""
+    response = requests.get(INSTRUMENT_MASTER, timeout=45)
+    response.raise_for_status()
+    df = pd.read_csv(StringIO(response.text), low_memory=False)
+
+    # Dhan's master has changed column names over time; normalize them.
+    cols = {str(c).upper().strip(): c for c in df.columns}
+    def col(*names):
+        for name in names:
+            if name in cols:
+                return cols[name]
+        return None
+
+    security_col = col("SECURITY_ID", "SEM_SECURITY_ID")
+    segment_col = col("SEGMENT", "SEM_SEGMENT")
+    instrument_col = col("INSTRUMENT", "SEM_INSTRUMENT_NAME")
+    symbol_col = col("SYMBOL_NAME", "SM_SYMBOL_NAME")
+    display_col = col("DISPLAY_NAME", "SEM_CUSTOM_SYMBOL")
+    exchange_col = col("EXCH_ID", "SEM_EXM_EXCH_ID")
+
+    if not security_col:
+        raise RuntimeError("Dhan instrument master has no Security ID column")
+
+    text_cols = [c for c in [symbol_col, display_col] if c]
+    if not text_cols:
+        raise RuntimeError("Dhan instrument master has no symbol/display column")
+
+    mask = False
+    for c in text_cols:
+        s = df[c].fillna("").astype(str).str.upper().str.replace("-", " ", regex=False)
+        mask = mask | s.str.contains("GIFT NIFTY|GIFTNIFTY|SGX NIFTY|SGXNIFTY", regex=True)
+
+    candidates = df[mask].copy()
+    if instrument_col:
+        inst = candidates[instrument_col].fillna("").astype(str).str.upper()
+        index_candidates = candidates[inst.str.contains("INDEX", na=False)]
+        if not index_candidates.empty:
+            candidates = index_candidates
+
+    if candidates.empty:
+        raise RuntimeError("GIFT Nifty was not found in Dhan instrument master")
+
+    # Prefer Dhan index segment, then the first current-looking GIFT Nifty index.
+    if segment_col:
+        idx = candidates[segment_col].fillna("").astype(str).str.upper()
+        preferred = candidates[idx.eq("IDX_I")]
+        if not preferred.empty:
+            candidates = preferred
+
+    row = candidates.iloc[0]
+    security_id = str(row[security_col]).split(".")[0]
+    segment = str(row[segment_col]) if segment_col else "IDX_I"
+    display = str(row[display_col]) if display_col else str(row[symbol_col])
+    exchange = str(row[exchange_col]) if exchange_col else ""
+    return security_id, segment, display, exchange
+
+
+def dhan_gift_nifty():
+    headers = dhan_headers()
+    if not headers:
+        return None, "Dhan credentials not configured in Quant Engine workflow"
+
+    try:
+        security_id, segment, display, exchange = resolve_gift_nifty()
+        payload = {segment: [int(security_id)]}
+        response = requests.post(
+            f"{DHAN_BASE}/marketfeed/ohlc",
+            headers=headers,
+            json=payload,
+            timeout=20,
+        )
+        response.raise_for_status()
+        body = response.json()
+        if body.get("status") not in (None, "success"):
+            raise RuntimeError(f"Dhan returned status={body.get('status')}")
+
+        bucket = body.get("data", {}).get(segment, {})
+        item = bucket.get(security_id) or bucket.get(str(int(security_id)))
+        if not item:
+            raise RuntimeError("Dhan returned no GIFT Nifty quote")
+
+        ohlc = item.get("ohlc", {}) or {}
+        value = item.get("last_price")
+        close = ohlc.get("close")
+        if value is None:
+            value = close
+        if value is None:
+            raise RuntimeError("Dhan GIFT Nifty quote has no last_price")
+
+        value = float(value)
+        previous = float(close) if close not in (None, 0) else None
+        change = None
+        change_pct = None
+        if previous is not None and previous != 0:
+            change = value - previous
+            change_pct = change / previous * 100
+
+        return {
+            "value": value,
+            "change": change,
+            "change_pct": change_pct,
+            "status": "LIVE",
+            "source": "Dhan",
+            "security_id": security_id,
+            "segment": segment,
+            "instrument": display,
+            "exchange": exchange,
+            "updated_at": datetime.now(IST).isoformat(),
+        }, None
+    except Exception as exc:
+        return None, str(exc)
 
 
 def status():
@@ -70,16 +202,32 @@ def main():
     sp = quote("^GSPC")
     nasdaq = quote("^IXIC")
 
+    gift_nifty, gift_error = dhan_gift_nifty()
+    if gift_nifty is None:
+        gift_nifty = {
+            "value": None,
+            "change": None,
+            "change_pct": None,
+            "status": "UNAVAILABLE",
+            "source": "Dhan",
+            "signal": gift_error or "No GIFT Nifty quote returned",
+            "updated_at": datetime.now(IST).isoformat(),
+        }
+
     payload = {
         "updated_at": datetime.now(IST).isoformat(),
-        "source": "GitHub Actions / Yahoo Finance server-side snapshot",
+        "source": "GitHub Actions / Yahoo Finance + Dhan",
         "market_status": {"india": status(), "us": us_status()},
         "india": {"nifty": nifty, "sensex": sensex},
         "us_markets": {"dow": dow, "sp500": sp, "nasdaq": nasdaq},
-        "gift_nifty": {"value": None, "change": None, "change_pct": None, "signal": "Awaiting dedicated GIFT NIFTY feed"},
+        "gift_nifty": gift_nifty,
     }
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
+
+    print(json.dumps({"gift_nifty": gift_nifty, "updated_at": payload["updated_at"]}, indent=2))
+    if gift_nifty.get("status") != "LIVE":
+        raise SystemExit("GIFT Nifty feed is not LIVE: " + str(gift_nifty.get("signal")))
 
 
 if __name__ == "__main__":
