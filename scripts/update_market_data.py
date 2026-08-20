@@ -14,7 +14,8 @@ ET = ZoneInfo("America/New_York")
 OUT = "data/market.json"
 DHAN_BASE = "https://api.dhan.co/v2"
 INSTRUMENT_MASTER = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
-NSE_GIFT_URL = "https://www.nseindia.com/market-data/live-equity-market"
+NSE_HOME = "https://www.nseindia.com/"
+INVESTING_GIFT = "https://www.investing.com/indices/gift-nifty-50-c1-futures"
 
 
 def quote(ticker):
@@ -105,45 +106,60 @@ def dhan_gift_nifty():
         bucket = body.get("data", {}).get(segment, {})
         item = bucket.get(security_id) or bucket.get(str(int(security_id)))
         if not item:
-            raise RuntimeError("No GIFT Nifty quote returned")
+            raise RuntimeError("Dhan returned no GIFT Nifty quote")
         value = item.get("last_price")
         net_change = item.get("net_change")
         if value is None:
-            raise RuntimeError("GIFT Nifty price unavailable")
+            raise RuntimeError("Dhan GIFT Nifty quote has no price")
         value = float(value)
         change = float(net_change) if net_change is not None else None
         previous = value - change if change is not None else None
         change_pct = (change / previous * 100) if previous not in (None, 0) else None
         return {"value": value, "change": change, "change_pct": change_pct, "status": "LIVE", "source": "Dhan", "security_id": security_id, "segment": segment, "instrument": display, "exchange": exchange, "updated_at": datetime.now(IST).isoformat()}, None
-    except Exception as exc:
-        return None, str(exc)
+    except Exception:
+        return None, "Dhan feed unavailable"
+
+
+def parse_gift_html(text, source):
+    clean = re.sub(r"\\s+", " ", text)
+    patterns = [
+        r"Futures\s+\d{1,2}-[A-Za-z]{3}-\d{4}\s+([\d,]+\.\d+)\s+([+-]?[\d,]+\.\d+)\s+\(([+-]?[\d.]+)%\)",
+        r"Gift Nifty 50(?: Futures)?[^0-9]{0,200}([\d,]+\.\d+)\s+([+-]?[\d,]+\.\d+)\s+([+-]?[\d.]+)%",
+        r"Gift Nifty 50[^0-9]{0,250}([\d,]+\.\d+)\s+([+-]?[\d,]+\.\d+)\s+\(([+-]?[\d.]+)%\)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, clean, flags=re.IGNORECASE)
+        if match:
+            value = float(match.group(1).replace(",", ""))
+            change = float(match.group(2).replace(",", ""))
+            change_pct = float(match.group(3))
+            return {"value": value, "change": change, "change_pct": change_pct, "status": "LIVE", "source": source, "updated_at": datetime.now(IST).isoformat()}
+    return None
 
 
 def public_gift_nifty():
-    """Parse the GIFT Nifty futures quote exposed in NSE's public market page."""
     headers = {"User-Agent": "Mozilla/5.0 (compatible; QuantEngine/1.0)", "Accept": "text/html,application/xhtml+xml"}
-    response = requests.get(NSE_GIFT_URL, headers=headers, timeout=20)
-    response.raise_for_status()
-    text = re.sub(r"\\s+", " ", response.text)
-    marker = re.search(r"GiftNiftyFutures[^0-9]{0,120}([0-9][0-9,]*\\.?[0-9]*)[^0-9+-]{0,80}([+-]?[0-9][0-9,]*\\.?[0-9]*)\\s*\\(?([+-]?[0-9]+\\.?[0-9]*)%", text, re.I)
-    if not marker:
-        marker = re.search(r"GiftNiftyFutures[^0-9]{0,120}([0-9][0-9,]*\\.?[0-9]*)[^0-9+-]{0,80}([+-]?[0-9][0-9,]*\\.?[0-9]*)", text, re.I)
-    if not marker:
-        raise RuntimeError("Public NSE GIFT Nifty quote not found")
-    value = float(marker.group(1).replace(",", ""))
-    change = float(marker.group(2).replace(",", ""))
-    change_pct = float(marker.group(3)) if marker.lastindex and marker.lastindex >= 3 else None
-    return {"value": value, "change": change, "change_pct": change_pct, "status": "LIVE", "source": "NSE Public", "instrument": "GIFT NIFTY Futures", "updated_at": datetime.now(IST).isoformat()}
+    sources = [(NSE_HOME, "NSE Public"), (INVESTING_GIFT, "Investing Public")]
+    for url, source in sources:
+        try:
+            response = requests.get(url, headers=headers, timeout=25)
+            response.raise_for_status()
+            parsed = parse_gift_html(response.text, source)
+            if parsed:
+                return parsed, None
+        except Exception:
+            continue
+    return None, "public GIFT Nifty quote unavailable"
 
 
 def get_gift_nifty():
-    value, error = dhan_gift_nifty()
+    value, _ = dhan_gift_nifty()
     if value is not None:
         return value
-    try:
-        return public_gift_nifty()
-    except Exception:
-        return {"value": None, "change": None, "change_pct": None, "status": "UNAVAILABLE", "source": "Public fallback", "signal": "GIFT Nifty feed temporarily unavailable", "updated_at": datetime.now(IST).isoformat()}
+    value, _ = public_gift_nifty()
+    if value is not None:
+        return value
+    return {"value": None, "change": None, "change_pct": None, "status": "UNAVAILABLE", "source": "Public/Dhan", "signal": "GIFT Nifty feed temporarily unavailable", "updated_at": datetime.now(IST).isoformat()}
 
 
 def status():
@@ -181,7 +197,7 @@ def main():
     sp = quote("^GSPC")
     nasdaq = quote("^IXIC")
     gift_nifty = get_gift_nifty()
-    payload = {"updated_at": datetime.now(IST).isoformat(), "source": "GitHub Actions / Yahoo Finance + Dhan + public NSE fallback", "market_status": {"india": status(), "us": us_status()}, "india": {"nifty": nifty, "sensex": sensex}, "us_markets": {"dow": dow, "sp500": sp, "nasdaq": nasdaq}, "gift_nifty": gift_nifty}
+    payload = {"updated_at": datetime.now(IST).isoformat(), "source": "GitHub Actions / Yahoo Finance + Dhan + public GIFT Nifty fallback", "market_status": {"india": status(), "us": us_status()}, "india": {"nifty": nifty, "sensex": sensex}, "us_markets": {"dow": dow, "sp500": sp, "nasdaq": nasdaq}, "gift_nifty": gift_nifty}
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     print(json.dumps({"gift_nifty_status": gift_nifty.get("status"), "gift_nifty_source": gift_nifty.get("source"), "updated_at": payload["updated_at"]}, indent=2))
