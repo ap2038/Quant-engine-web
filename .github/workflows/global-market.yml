@@ -13,6 +13,10 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      # Reuse the same Dhan credential names used by the trading stack.
+      DHAN_CLIENT_ID: ${{ secrets.DHAN_CLIENT_ID }}
+      DHAN_ACCESS_TOKEN: ${{ secrets.DHAN_ACCESS_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
