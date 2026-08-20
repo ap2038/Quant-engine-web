@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-08-20T05:15:49.782067+05:30",
-  "source": "GitHub Actions / Yahoo Finance server-side snapshot",
+  "updated_at": "2026-08-20T07:52:12.230550+05:30",
+  "source": "GitHub Actions / Yahoo Finance + Dhan",
   "market_status": {
     "india": "CLOSED",
-    "us": "AFTER-HOURS"
+    "us": "CLOSED"
   },
   "india": {
     "nifty": {
@@ -43,6 +43,9 @@
     "value": null,
     "change": null,
     "change_pct": null,
-    "signal": "Awaiting dedicated GIFT NIFTY feed"
+    "status": "UNAVAILABLE",
+    "source": "Dhan",
+    "signal": "Dhan credentials are not configured in Quant Engine",
+    "updated_at": "2026-08-20T07:52:12.230542+05:30"
   }
 }
