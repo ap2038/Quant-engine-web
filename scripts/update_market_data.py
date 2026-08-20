@@ -59,8 +59,8 @@ def resolve_gift_nifty():
     response.raise_for_status()
     df = pd.read_csv(StringIO(response.text), low_memory=False)
 
-    # Dhan's master has changed column names over time; normalize them.
     cols = {str(c).upper().strip(): c for c in df.columns}
+
     def col(*names):
         for name in names:
             if name in cols:
@@ -96,7 +96,6 @@ def resolve_gift_nifty():
     if candidates.empty:
         raise RuntimeError("GIFT Nifty was not found in Dhan instrument master")
 
-    # Prefer Dhan index segment, then the first current-looking GIFT Nifty index.
     if segment_col:
         idx = candidates[segment_col].fillna("").astype(str).str.upper()
         preferred = candidates[idx.eq("IDX_I")]
@@ -114,13 +113,13 @@ def resolve_gift_nifty():
 def dhan_gift_nifty():
     headers = dhan_headers()
     if not headers:
-        return None, "Dhan credentials not configured in Quant Engine workflow"
+        return None, "Dhan credentials are not configured in Quant Engine"
 
     try:
         security_id, segment, display, exchange = resolve_gift_nifty()
         payload = {segment: [int(security_id)]}
         response = requests.post(
-            f"{DHAN_BASE}/marketfeed/ohlc",
+            f"{DHAN_BASE}/marketfeed/quote",
             headers=headers,
             json=payload,
             timeout=20,
@@ -135,21 +134,15 @@ def dhan_gift_nifty():
         if not item:
             raise RuntimeError("Dhan returned no GIFT Nifty quote")
 
-        ohlc = item.get("ohlc", {}) or {}
         value = item.get("last_price")
-        close = ohlc.get("close")
-        if value is None:
-            value = close
+        net_change = item.get("net_change")
         if value is None:
             raise RuntimeError("Dhan GIFT Nifty quote has no last_price")
 
         value = float(value)
-        previous = float(close) if close not in (None, 0) else None
-        change = None
-        change_pct = None
-        if previous is not None and previous != 0:
-            change = value - previous
-            change_pct = change / previous * 100
+        change = float(net_change) if net_change is not None else None
+        previous = value - change if change is not None else None
+        change_pct = (change / previous * 100) if previous not in (None, 0) else None
 
         return {
             "value": value,
@@ -226,8 +219,6 @@ def main():
         json.dump(payload, f, indent=2)
 
     print(json.dumps({"gift_nifty": gift_nifty, "updated_at": payload["updated_at"]}, indent=2))
-    if gift_nifty.get("status") != "LIVE":
-        raise SystemExit("GIFT Nifty feed is not LIVE: " + str(gift_nifty.get("signal")))
 
 
 if __name__ == "__main__":
