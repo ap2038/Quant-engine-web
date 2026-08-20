@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 from io import StringIO
 from zoneinfo import ZoneInfo
@@ -93,22 +94,22 @@ def resolve_gift_nifty():
 def dhan_gift_nifty():
     headers = dhan_headers()
     if not headers:
-        return None, "Dhan credentials are not configured in Quant Engine"
+        return None, "Dhan feed unavailable"
     try:
         security_id, segment, display, exchange = resolve_gift_nifty()
         response = requests.post(f"{DHAN_BASE}/marketfeed/quote", headers=headers, json={segment: [int(security_id)]}, timeout=20)
         response.raise_for_status()
         body = response.json()
         if body.get("status") not in (None, "success"):
-            raise RuntimeError(f"Dhan returned status={body.get('status')}")
+            raise RuntimeError("Dhan quote request failed")
         bucket = body.get("data", {}).get(segment, {})
         item = bucket.get(security_id) or bucket.get(str(int(security_id)))
         if not item:
-            raise RuntimeError("Dhan returned no GIFT Nifty quote")
+            raise RuntimeError("No GIFT Nifty quote returned")
         value = item.get("last_price")
         net_change = item.get("net_change")
         if value is None:
-            raise RuntimeError("Dhan GIFT Nifty quote has no last_price")
+            raise RuntimeError("GIFT Nifty price unavailable")
         value = float(value)
         change = float(net_change) if net_change is not None else None
         previous = value - change if change is not None else None
@@ -119,28 +120,30 @@ def dhan_gift_nifty():
 
 
 def public_gift_nifty():
-    """Best-effort public fallback. Never requires credentials; only marks LIVE when a quote is parsed."""
+    """Parse the GIFT Nifty futures quote exposed in NSE's public market page."""
     headers = {"User-Agent": "Mozilla/5.0 (compatible; QuantEngine/1.0)", "Accept": "text/html,application/xhtml+xml"}
-    try:
-        response = requests.get(NSE_GIFT_URL, headers=headers, timeout=20)
-        response.raise_for_status()
-        text = response.text
-        # Public NSE page availability is validated here; quote parsing is intentionally conservative.
-        if "GIFT NIFTY" not in text.upper() and "GIFTNIFTY" not in text.upper():
-            raise RuntimeError("Public NSE page did not expose GIFT Nifty data")
-        raise RuntimeError("Public GIFT Nifty quote requires NSE dynamic market-data payload")
-    except Exception as exc:
-        return None, str(exc)
+    response = requests.get(NSE_GIFT_URL, headers=headers, timeout=20)
+    response.raise_for_status()
+    text = re.sub(r"\\s+", " ", response.text)
+    marker = re.search(r"GiftNiftyFutures[^0-9]{0,120}([0-9][0-9,]*\\.?[0-9]*)[^0-9+-]{0,80}([+-]?[0-9][0-9,]*\\.?[0-9]*)\\s*\\(?([+-]?[0-9]+\\.?[0-9]*)%", text, re.I)
+    if not marker:
+        marker = re.search(r"GiftNiftyFutures[^0-9]{0,120}([0-9][0-9,]*\\.?[0-9]*)[^0-9+-]{0,80}([+-]?[0-9][0-9,]*\\.?[0-9]*)", text, re.I)
+    if not marker:
+        raise RuntimeError("Public NSE GIFT Nifty quote not found")
+    value = float(marker.group(1).replace(",", ""))
+    change = float(marker.group(2).replace(",", ""))
+    change_pct = float(marker.group(3)) if marker.lastindex and marker.lastindex >= 3 else None
+    return {"value": value, "change": change, "change_pct": change_pct, "status": "LIVE", "source": "NSE Public", "instrument": "GIFT NIFTY Futures", "updated_at": datetime.now(IST).isoformat()}
 
 
 def get_gift_nifty():
     value, error = dhan_gift_nifty()
     if value is not None:
-        return value, None
-    public_value, public_error = public_gift_nifty()
-    if public_value is not None:
-        return public_value, None
-    return {"value": None, "change": None, "change_pct": None, "status": "UNAVAILABLE", "source": "Dhan/Public NSE", "signal": "GIFT Nifty feed unavailable", "updated_at": datetime.now(IST).isoformat()}, f"Dhan: {error}; Public: {public_error}"
+        return value
+    try:
+        return public_gift_nifty()
+    except Exception:
+        return {"value": None, "change": None, "change_pct": None, "status": "UNAVAILABLE", "source": "Public fallback", "signal": "GIFT Nifty feed temporarily unavailable", "updated_at": datetime.now(IST).isoformat()}
 
 
 def status():
@@ -177,7 +180,7 @@ def main():
     dow = quote("^DJI")
     sp = quote("^GSPC")
     nasdaq = quote("^IXIC")
-    gift_nifty, gift_error = get_gift_nifty()
+    gift_nifty = get_gift_nifty()
     payload = {"updated_at": datetime.now(IST).isoformat(), "source": "GitHub Actions / Yahoo Finance + Dhan + public NSE fallback", "market_status": {"india": status(), "us": us_status()}, "india": {"nifty": nifty, "sensex": sensex}, "us_markets": {"dow": dow, "sp500": sp, "nasdaq": nasdaq}, "gift_nifty": gift_nifty}
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
