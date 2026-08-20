@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-08-20T08:02:21.331235+05:30",
-  "source": "GitHub Actions / Yahoo Finance + Dhan + public NSE fallback",
+  "updated_at": "2026-08-20T08:19:33.053878+05:30",
+  "source": "GitHub Actions / Yahoo Finance + Dhan + public GIFT Nifty fallback",
   "market_status": {
     "india": "CLOSED",
     "us": "CLOSED"
@@ -44,8 +44,8 @@
     "change": null,
     "change_pct": null,
     "status": "UNAVAILABLE",
-    "source": "Public fallback",
+    "source": "Public/Dhan",
     "signal": "GIFT Nifty feed temporarily unavailable",
-    "updated_at": "2026-08-20T08:02:21.330302+05:30"
+    "updated_at": "2026-08-20T08:19:33.053856+05:30"
   }
 }
