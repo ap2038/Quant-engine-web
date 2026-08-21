@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-22T00:46:51.300366+05:30",
+  "updated_at": "2026-08-22T01:24:05.140480+05:30",
   "source": "GitHub Actions / Yahoo Finance + Public GIFT Nifty",
   "market_status": {
     "india": "CLOSED",
@@ -21,22 +21,22 @@
   },
   "us_markets": {
     "dow": {
-      "value": 53315.5,
-      "change": -7.3984375,
-      "change_pct": -0.013874784973799681,
-      "timestamp": "2026-08-21T15:15:00-04:00"
+      "value": 53314.55078125,
+      "change": -25.59765625,
+      "change_pct": -0.047989473220144685,
+      "timestamp": "2026-08-21T15:50:00-04:00"
     },
     "sp500": {
-      "value": 7677.919921875,
-      "change": -0.7099609375,
-      "change_pct": -0.009245932520973721,
-      "timestamp": "2026-08-21T15:15:00-04:00"
+      "value": 7678.02001953125,
+      "change": -7.2998046875,
+      "change_pct": -0.09498374634320239,
+      "timestamp": "2026-08-21T15:50:00-04:00"
     },
     "nasdaq": {
-      "value": 26172.01953125,
-      "change": -3.9453125,
-      "change_pct": -0.015072271542049265,
-      "timestamp": "2026-08-21T15:15:00-04:00"
+      "value": 26194.609375,
+      "change": -25.9609375,
+      "change_pct": -0.09900981248918139,
+      "timestamp": "2026-08-21T15:50:00-04:00"
     }
   },
   "gift_nifty": {
@@ -46,6 +46,6 @@
     "status": "UNAVAILABLE",
     "source": "Public feed",
     "signal": "GIFT Nifty public feed temporarily unavailable",
-    "updated_at": "2026-08-22T00:46:51.298836+05:30"
+    "updated_at": "2026-08-22T01:24:05.139068+05:30"
   }
 }
