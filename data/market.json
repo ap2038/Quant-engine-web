@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-08-22T08:37:00.584447+05:30",
+  "updated_at": "2026-08-24T09:02:58.214849+05:30",
   "source": "GitHub Actions / Yahoo Finance + Public GIFT Nifty",
   "market_status": {
-    "india": "CLOSED",
+    "india": "PRE-OPEN",
     "us": "CLOSED"
   },
   "india": {
@@ -46,6 +46,6 @@
     "status": "UNAVAILABLE",
     "source": "Public feed",
     "signal": "GIFT Nifty public feed temporarily unavailable",
-    "updated_at": "2026-08-22T08:37:00.582563+05:30"
+    "updated_at": "2026-08-24T09:02:58.212725+05:30"
   }
 }
