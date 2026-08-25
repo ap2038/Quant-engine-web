@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-08-25T08:44:40.144470+05:30",
+  "updated_at": "2026-08-25T10:38:24.712810+05:30",
   "source": "GitHub Actions / Yahoo Finance + Public GIFT Nifty",
   "market_status": {
-    "india": "CLOSED",
+    "india": "OPEN",
     "us": "CLOSED"
   },
   "india": {
     "nifty": {
-      "value": 24219.05078125,
-      "change": 36.25,
-      "change_pct": 0.14989992403240393,
-      "timestamp": "2026-08-24T15:25:00+05:30"
+      "value": 24130.400390625,
+      "change": 0.650390625,
+      "change_pct": 0.002695388990758829,
+      "timestamp": "2026-08-25T10:35:00+05:30"
     },
     "sensex": {
-      "value": 77369.109375,
-      "change": 19.4921875,
-      "change_pct": 0.025200108557421608,
-      "timestamp": "2026-08-24T15:25:00+05:30"
+      "value": 77151.78125,
+      "change": -17.15625,
+      "change_pct": -0.022232067144889456,
+      "timestamp": "2026-08-25T10:20:00+05:30"
     }
   },
   "us_markets": {
@@ -46,6 +46,6 @@
     "status": "UNAVAILABLE",
     "source": "Public feed",
     "signal": "GIFT Nifty public feed temporarily unavailable",
-    "updated_at": "2026-08-25T08:44:40.142888+05:30"
+    "updated_at": "2026-08-25T10:38:24.711039+05:30"
   }
 }
