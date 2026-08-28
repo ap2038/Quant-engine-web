@@ -1,42 +1,42 @@
 {
-  "updated_at": "2026-08-28T07:00:30.903885+05:30",
+  "updated_at": "2026-08-29T03:24:20.677865+05:30",
   "source": "GitHub Actions / Yahoo Finance + Public GIFT Nifty",
   "market_status": {
     "india": "CLOSED",
-    "us": "CLOSED"
+    "us": "AFTER-HOURS"
   },
   "india": {
     "nifty": {
-      "value": 24090.849609375,
-      "change": -42.201171875,
-      "change_pct": -0.17486878164524322,
-      "timestamp": "2026-08-27T15:25:00+05:30"
+      "value": 24175.650390625,
+      "change": 33.201171875,
+      "change_pct": 0.13752197042715686,
+      "timestamp": "2026-08-28T15:25:00+05:30"
     },
     "sensex": {
-      "value": 76933.59375,
-      "change": 269.296875,
-      "change_pct": 0.35126765127591053,
-      "timestamp": "2026-08-27T15:25:00+05:30"
+      "value": 77264.5078125,
+      "change": 63.21875,
+      "change_pct": 0.08188820519410278,
+      "timestamp": "2026-08-28T15:25:00+05:30"
     }
   },
   "us_markets": {
     "dow": {
-      "value": 53562.0703125,
-      "change": -16.2890625,
-      "change_pct": -0.030402316700273158,
-      "timestamp": "2026-08-27T15:55:00-04:00"
+      "value": 53546.7890625,
+      "change": -19.421875,
+      "change_pct": -0.03625769801538503,
+      "timestamp": "2026-08-28T15:55:00-04:00"
     },
     "sp500": {
-      "value": 7730.10986328125,
-      "change": -1.27001953125,
-      "change_pct": -0.016426815788384008,
-      "timestamp": "2026-08-27T15:55:00-04:00"
+      "value": 7709.89990234375,
+      "change": -1.34033203125,
+      "change_pct": -0.01738153643917606,
+      "timestamp": "2026-08-28T15:55:00-04:00"
     },
     "nasdaq": {
-      "value": 26539.560546875,
-      "change": -4.357421875,
-      "change_pct": -0.016415895649357637,
-      "timestamp": "2026-08-27T15:55:00-04:00"
+      "value": 26398.08203125,
+      "change": -7.73046875,
+      "change_pct": -0.02927563296907243,
+      "timestamp": "2026-08-28T15:55:00-04:00"
     }
   },
   "gift_nifty": {
@@ -46,6 +46,6 @@
     "status": "UNAVAILABLE",
     "source": "Public feed",
     "signal": "GIFT Nifty public feed temporarily unavailable",
-    "updated_at": "2026-08-28T07:00:30.902566+05:30"
+    "updated_at": "2026-08-29T03:24:20.676523+05:30"
   }
 }
