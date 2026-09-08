@@ -44,12 +44,7 @@ function yahooSnapshot(payload) {
   const value = Number(meta.regularMarketPrice ?? meta.previousClose);
   const previous = Number(meta.previousClose ?? meta.chartPreviousClose);
   const change = Number.isFinite(value) && Number.isFinite(previous) ? value - previous : null;
-  return {
-    value: Number.isFinite(value) ? value : null,
-    change: Number.isFinite(change) ? change : null,
-    change_pct: Number.isFinite(change) && previous ? (change / previous) * 100 : null,
-    timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : new Date().toISOString(),
-  };
+  return { value: Number.isFinite(value) ? value : null, change: Number.isFinite(change) ? change : null, change_pct: Number.isFinite(change) && previous ? (change / previous) * 100 : null, timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : new Date().toISOString() };
 }
 
 async function liveIndex(symbol) {
@@ -64,9 +59,7 @@ async function loadLiveIndia() {
     const [n, s] = await Promise.all([liveIndex('^NSEI'), liveIndex('^BSESN')]);
     renderMarket({india:{nifty:n, sensex:s}, us_markets:{}, gift_nifty:{}, updated_at:new Date().toISOString()});
     setText('global-source-status','LIVE • 1s POLL','text-xs font-bold text-emerald-300');
-  } catch (e) {
-    console.warn('Second-by-second live index feed unavailable; keeping snapshot feed', e);
-  }
+  } catch (e) { console.warn('Second-by-second live index feed unavailable; keeping snapshot feed', e); }
 }
 
 function renderCall(report) {
@@ -75,6 +68,23 @@ function renderCall(report) {
   if(open.length){setText('call-status','CALL GIVEN','text-4xl md:text-5xl font-extrabold mt-4 text-emerald-300');setText('call-detail',open.slice(0,3).map(([s,x])=>`${s} ${x.direction||''}`.trim()).join(' • '),'text-slate-300 mt-2');setText('call-confidence',open[0][1].confidence||open[0][1].score||'HIGH');setText('call-bias',(open[0][1].direction||'').toUpperCase());}
   else {setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');setText('call-confidence','--');setText('call-bias','NEUTRAL');}
   setText('ui-vix',typeof report?.market_context?.vix==='number'?report.market_context.vix.toFixed(2):'--'); setText('ui-sentiment',report?.market_context?.sentiment||'NEUTRAL'); setText('ui-oi-data',report?.market_context?.oi_summary||'No OI data');
+}
+
+function renderCallHistory(report) {
+  const body = $('call-history-table');
+  if (!body) return;
+  const history = Array.isArray(report?.call_history) ? report.call_history : (Array.isArray(report?.signal_history) ? report.signal_history : (Array.isArray(report?.calls) ? report.calls : []));
+  body.innerHTML = '';
+  if (!history.length) {
+    body.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-600">No Telegram crossover history available.</td></tr>';
+    return;
+  }
+  history.slice().reverse().slice(0,50).forEach(x => {
+    const tr = document.createElement('tr');
+    const values = [x.time || x.timestamp || x.date || '--', x.index || x.name || x.symbol || '--', x.side || x.signal || x.direction || '--', x.spot ?? x.price ?? '--', x.status || 'TELEGRAM SENT', x.crossover ? 'YES' : 'YES'];
+    values.forEach((v,j)=>{ const td=document.createElement('td'); td.className=`px-5 py-3 ${j===1?'font-bold text-white':j===2?'font-semibold text-sky-300':'text-right font-mono'}`; td.textContent=typeof v==='number'?num(v):v; tr.appendChild(td); });
+    body.appendChild(tr);
+  });
 }
 
 function renderStocks(report) {
@@ -89,7 +99,7 @@ async function load(){
   renderClock();
   try { renderMarket(await getJSON(MARKET_URL)); } catch(e) { console.warn('Market snapshot unavailable',e); setText('global-source-status','DATA OFFLINE','text-xs font-bold text-rose-300'); }
   await loadLiveIndia();
-  try { const r=await getJSON(REPORT_URL); renderCall(r); renderStocks(r); setText('last-sync',new Date().toLocaleTimeString('en-IN',{hour12:false})); } catch(e) { console.warn('Report feed unavailable',e); setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300'); setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2'); }
+  try { const r=await getJSON(REPORT_URL); renderCall(r); renderCallHistory(r); renderStocks(r); setText('last-sync',new Date().toLocaleTimeString('en-IN',{hour12:false})); } catch(e) { console.warn('Report feed unavailable',e); setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300'); setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2'); }
 }
 
 function navigate(pageId){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));$(`page-${pageId}`)?.classList.add('active');$(`nav-${pageId}`)?.classList.add('active');load();}
