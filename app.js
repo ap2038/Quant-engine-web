@@ -70,13 +70,24 @@ function renderCall(report) {
   setText('ui-vix',typeof report?.market_context?.vix==='number'?report.market_context.vix.toFixed(2):'--'); setText('ui-sentiment',report?.market_context?.sentiment||'NEUTRAL'); setText('ui-oi-data',report?.market_context?.oi_summary||'No OI data');
 }
 
+function ensureCallHistoryPanel() {
+  if ($('call-history-table')) return;
+  const page = $('page-positions');
+  if (!page) return;
+  const card = document.createElement('div');
+  card.className = 'glass rounded-2xl p-5 mt-4';
+  card.innerHTML = '<div class="flex items-center justify-between"><div><div class="text-xs uppercase tracking-[.2em] text-slate-500">Telegram Crossover History</div><div class="text-sm text-slate-400 mt-1">Successfully sent crossover alerts only.</div></div><div class="text-[10px] text-slate-600">LATEST 50</div></div><div class="mobile-scroll mt-4"><table class="w-full text-sm"><thead class="text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-800"><tr><th class="px-5 py-3 text-left">Time</th><th class="px-5 py-3 text-left">Index</th><th class="px-5 py-3 text-right">Signal</th><th class="px-5 py-3 text-right">Spot</th><th class="px-5 py-3 text-right">Status</th><th class="px-5 py-3 text-right">Crossover</th></tr></thead><tbody id="call-history-table"><tr><td colspan="6" class="px-5 py-8 text-center text-slate-600">Loading history...</td></tr></tbody></table></div>';
+  page.appendChild(card);
+}
+
 function renderCallHistory(report) {
+  ensureCallHistoryPanel();
   const body = $('call-history-table');
   if (!body) return;
   const history = Array.isArray(report?.call_history) ? report.call_history : (Array.isArray(report?.signal_history) ? report.signal_history : (Array.isArray(report?.calls) ? report.calls : []));
   body.innerHTML = '';
   if (!history.length) {
-    body.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-600">No Telegram crossover history available.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-600">No Telegram crossover history in the current public report feed.</td></tr>';
     return;
   }
   history.slice().reverse().slice(0,50).forEach(x => {
@@ -106,6 +117,7 @@ function navigate(pageId){document.querySelectorAll('.page').forEach(p=>p.classL
 
 window.addEventListener('DOMContentLoaded',()=>{
   renderClock();
+  ensureCallHistoryPanel();
   setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');
   setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');
   load();
