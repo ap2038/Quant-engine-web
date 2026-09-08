@@ -1,5 +1,6 @@
 const MARKET_URL = './data/market.json';
 const REPORT_URL = 'https://gist.githubusercontent.com/ap2038/941e59e4a43b6cbc639dd716757bfc57/raw/dashboard_data.json';
+const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/';
 
 const $ = id => document.getElementById(id);
 const setText = (id, value, cls) => { const n = $(id); if (!n) return; n.textContent = value ?? '--'; if (cls) n.className = cls; };
@@ -38,6 +39,36 @@ function renderMarket(d) {
   setText('global-source-status', d?.updated_at ? 'LIVE SNAPSHOT' : 'WAITING', d?.updated_at ? 'text-xs font-bold text-emerald-300' : 'text-xs font-bold text-amber-300');
 }
 
+function yahooSnapshot(payload) {
+  const meta = payload?.chart?.result?.[0]?.meta || {};
+  const value = Number(meta.regularMarketPrice ?? meta.previousClose);
+  const previous = Number(meta.previousClose ?? meta.chartPreviousClose);
+  const change = Number.isFinite(value) && Number.isFinite(previous) ? value - previous : null;
+  return {
+    value: Number.isFinite(value) ? value : null,
+    change: Number.isFinite(change) ? change : null,
+    change_pct: Number.isFinite(change) && previous ? (change / previous) * 100 : null,
+    timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : new Date().toISOString(),
+  };
+}
+
+async function liveIndex(symbol) {
+  const r = await fetch(`${YAHOO_URL}${encodeURIComponent(symbol)}?range=1d&interval=1m&includePrePost=true&t=${Date.now()}`, {cache:'no-store', headers:{Accept:'application/json'}});
+  if (!r.ok) throw new Error(`Live quote ${r.status}`);
+  return yahooSnapshot(await r.json());
+}
+
+async function loadLiveIndia() {
+  if (status('Asia/Kolkata', true) !== 'OPEN') return;
+  try {
+    const [n, s] = await Promise.all([liveIndex('^NSEI'), liveIndex('^BSESN')]);
+    renderMarket({india:{nifty:n, sensex:s}, us_markets:{}, gift_nifty:{}, updated_at:new Date().toISOString()});
+    setText('global-source-status','LIVE • 1s POLL','text-xs font-bold text-emerald-300');
+  } catch (e) {
+    console.warn('Second-by-second live index feed unavailable; keeping snapshot feed', e);
+  }
+}
+
 function renderCall(report) {
   const trades=report?.trades||{}; const open=Object.entries(trades).filter(([,x])=>x?.status==='OPEN');
   setText('call-count', open.length);
@@ -57,9 +88,18 @@ async function getJSON(url){const r=await fetch(`${url}?t=${Date.now()}`,{cache:
 async function load(){
   renderClock();
   try { renderMarket(await getJSON(MARKET_URL)); } catch(e) { console.warn('Market snapshot unavailable',e); setText('global-source-status','DATA OFFLINE','text-xs font-bold text-rose-300'); }
+  await loadLiveIndia();
   try { const r=await getJSON(REPORT_URL); renderCall(r); renderStocks(r); setText('last-sync',new Date().toLocaleTimeString('en-IN',{hour12:false})); } catch(e) { console.warn('Report feed unavailable',e); setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300'); setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2'); }
 }
 
 function navigate(pageId){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));$(`page-${pageId}`)?.classList.add('active');$(`nav-${pageId}`)?.classList.add('active');load();}
 
-window.addEventListener('DOMContentLoaded',()=>{renderClock();setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');load();setInterval(load,30000);setInterval(renderClock,15000);});
+window.addEventListener('DOMContentLoaded',()=>{
+  renderClock();
+  setText('call-status','WAIT','text-4xl md:text-5xl font-extrabold mt-4 text-yellow-300');
+  setText('call-detail','Wait for the right movement to enter.','text-slate-400 mt-2');
+  load();
+  setInterval(loadLiveIndia,1000);
+  setInterval(load,30000);
+  setInterval(renderClock,15000);
+});
