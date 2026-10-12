@@ -1,42 +1,42 @@
 {
-  "updated_at": "2026-10-12T15:25:59.641305+05:30",
+  "updated_at": "2026-10-13T00:59:41.562121+05:30",
   "source": "GitHub Actions / Yahoo Finance + Public GIFT Nifty",
   "market_status": {
-    "india": "OPEN",
-    "us": "CLOSED"
+    "india": "CLOSED",
+    "us": "OPEN"
   },
   "india": {
     "nifty": {
-      "value": 22316.849609375,
-      "change": 0.0,
-      "change_pct": 0.0,
+      "value": 22363.349609375,
+      "change": 46.5,
+      "change_pct": 0.2083627430121915,
       "timestamp": "2026-10-12T15:25:00+05:30"
     },
     "sensex": {
-      "value": 71722.0703125,
-      "change": 19.9609375,
-      "change_pct": 0.02783870331568572,
-      "timestamp": "2026-10-12T15:10:00+05:30"
+      "value": 71924.6796875,
+      "change": -43.9140625,
+      "change_pct": -0.06101836955789697,
+      "timestamp": "2026-10-12T15:25:00+05:30"
     }
   },
   "us_markets": {
     "dow": {
-      "value": 51652.87109375,
-      "change": -20.30078125,
-      "change_pct": -0.03928688817305126,
-      "timestamp": "2026-10-09T15:55:00-04:00"
+      "value": 51804.4609375,
+      "change": -13.1875,
+      "change_pct": -0.02544982336646351,
+      "timestamp": "2026-10-12T15:25:00-04:00"
     },
     "sp500": {
-      "value": 7811.08984375,
-      "change": 0.81982421875,
-      "change_pct": 0.010496746164978532,
-      "timestamp": "2026-10-09T15:55:00-04:00"
+      "value": 7799.10986328125,
+      "change": -0.4501953125,
+      "change_pct": -0.005772060335684781,
+      "timestamp": "2026-10-12T15:25:00-04:00"
     },
     "nasdaq": {
-      "value": 27364.31640625,
-      "change": 1.634765625,
-      "change_pct": 0.005974434985844823,
-      "timestamp": "2026-10-09T15:55:00-04:00"
+      "value": 27231.57421875,
+      "change": -1.759765625,
+      "change_pct": -0.006461807526059182,
+      "timestamp": "2026-10-12T15:25:00-04:00"
     }
   },
   "gift_nifty": {
@@ -46,6 +46,6 @@
     "status": "UNAVAILABLE",
     "source": "Public feed",
     "signal": "GIFT Nifty public feed temporarily unavailable",
-    "updated_at": "2026-10-12T15:25:59.640311+05:30"
+    "updated_at": "2026-10-13T00:59:41.560644+05:30"
   }
 }
